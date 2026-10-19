@@ -1,26 +1,156 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --canvas: #101010;
+  --canvas-soft: #1a1a1a;
+  --hairline: #3d3a39;
+  --hairline-soft: #b8b3b0;
+  --primary: #00d992;
+  --primary-soft: #2fd6a1;
+  --primary-deep: #10b981;
+  --on-primary: #101010;
+  --ink: #f2f2f2;
+  --ink-strong: #ffffff;
+  --body: #bdbdbd;
+  --mute: #8b949e;
+  --canvas-text-soft: #f5f6f7;
+
+  --background: #101010;
+  --foreground: #f2f2f2;
 }
 
 @theme inline {
+  --color-canvas: var(--canvas);
+  --color-canvas-soft: var(--canvas-soft);
+  --color-hairline: var(--hairline);
+  --color-hairline-soft: var(--hairline-soft);
+  --color-primary: var(--primary);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-deep: var(--primary-deep);
+  --color-on-primary: var(--on-primary);
+  --color-ink: var(--ink);
+  --color-ink-strong: var(--ink-strong);
+  --color-body: var(--body);
+  --color-mute: var(--mute);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  --font-mono: var(--font-mono, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
+html,
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: #101010;
+  color: #f2f2f2;
+  min-height: 100%;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Custom hairline borders and cards per DESIGN.md */
+.card-feature {
+  background-color: #101010;
+  border: 1px solid #3d3a39;
+  border-radius: 8px;
+  color: #f2f2f2;
+}
+
+.card-feature-soft {
+  background-color: #1a1a1a;
+  border: 1px solid #3d3a39;
+  border-radius: 8px;
+  color: #f2f2f2;
+}
+
+.btn-primary {
+  background-color: #00d992;
+  color: #101010;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  transition: all 0.15s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-primary:hover {
+  background-color: #2fd6a1;
+}
+
+.btn-outline {
+  background-color: #101010;
+  color: #f2f2f2;
+  border: 1px solid #3d3a39;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 10px 16px;
+  font-size: 14px;
+  transition: all 0.15s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-outline:hover {
+  border-color: #8b949e;
+  background-color: #1a1a1a;
+}
+
+.btn-ghost-green {
+  background: transparent;
+  color: #2fd6a1;
+  font-weight: 600;
+  padding: 8px 12px;
+  border-radius: 6px;
+  transition: all 0.15s ease-in-out;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.btn-ghost-green:hover {
+  color: #00d992;
+  background-color: rgba(0, 217, 146, 0.08);
+}
+
+.pill-tag {
+  background-color: #101010;
+  color: #f2f2f2;
+  border: 1px solid #3d3a39;
+  font-size: 12px;
+  border-radius: 9999px;
+  padding: 3px 10px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pill-tag-active {
+  background-color: rgba(0, 217, 146, 0.1);
+  color: #00d992;
+  border: 1px solid rgba(0, 217, 146, 0.4);
+  font-size: 12px;
+  border-radius: 9999px;
+  padding: 3px 10px;
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dashed-divider {
+  border-bottom: 1px dashed rgba(79, 93, 117, 0.4);
+}
+
+.eyebrow-mono {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2.52px;
+  color: #8b949e;
 }
