@@ -27,9 +27,6 @@ export default function Home() {
       {/* Hero Section */}
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-24 text-center sm:px-8">
         <div className="mx-auto max-w-3xl">
-          <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-[#3d3a39] bg-[#1a1a1a] px-3 py-1 font-sans text-xs font-semibold uppercase tracking-[0.45px] text-[#00d992]">
-            <span>Google OAuth Ready</span>
-          </div>
 
           <h1 className="text-4xl font-normal tracking-tight text-[#ffffff] sm:text-6xl sm:leading-[1.1]">
             Technical Interview Partner Matching &amp; Evaluation
