@@ -23,7 +23,41 @@ export type Database = {
           }
         },"public": {
           Tables: {
-            [_ in never]: never
+            "interview_chunks": {
+                  Row: {
+                    "chunk_index": number,"cloudinary_public_id": string,"cloudinary_url": string,"created_at": string,"duration_seconds": number,"id": string,"interview_id": string,"transcribed_at": string | null,"transcript": string | null
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "chunk_index": number,"cloudinary_public_id": string,"cloudinary_url": string,"created_at"?: string,"duration_seconds"?: number,"id"?: string,"interview_id": string,"transcribed_at"?: string | null,"transcript"?: string | null
+                  }
+                  Update: {
+                    "chunk_index"?: number,"cloudinary_public_id"?: string,"cloudinary_url"?: string,"created_at"?: string,"duration_seconds"?: number,"id"?: string,"interview_id"?: string,"transcribed_at"?: string | null,"transcript"?: string | null
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "interview_chunks_interview_id_fkey"
+      columns: ["interview_id"]
+isOneToOne: false
+      referencedRelation: "interviews"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"interviews": {
+                  Row: {
+                    "candidate_id": string,"created_at": string,"duration_seconds": number,"format": string,"id": string,"interviewer_id": string,"master_recording_url": string | null,"scheduled_at": string,"status": string,"title": string,"total_chunks": number,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "candidate_id": string,"created_at"?: string,"duration_seconds"?: number,"format"?: string,"id"?: string,"interviewer_id": string,"master_recording_url"?: string | null,"scheduled_at"?: string,"status"?: string,"title"?: string,"total_chunks"?: number,"updated_at"?: string
+                  }
+                  Update: {
+                    "candidate_id"?: string,"created_at"?: string,"duration_seconds"?: number,"format"?: string,"id"?: string,"interviewer_id"?: string,"master_recording_url"?: string | null,"scheduled_at"?: string,"status"?: string,"title"?: string,"total_chunks"?: number,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                }
           }
           Views: {
             [_ in never]: never

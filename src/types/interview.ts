@@ -1,0 +1,27 @@
+import { Database } from './database.types';
+
+export type InterviewRow = Database['public']['Tables']['interviews']['Row'];
+export type InterviewInsert = Database['public']['Tables']['interviews']['Insert'];
+export type InterviewUpdate = Database['public']['Tables']['interviews']['Update'];
+
+export type InterviewChunkRow = Database['public']['Tables']['interview_chunks']['Row'];
+export type InterviewChunkInsert = Database['public']['Tables']['interview_chunks']['Insert'];
+
+export type InterviewStatus = 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled' | 'declined';
+
+export interface RoomParticipant {
+  id: string;
+  role: 'candidate' | 'interviewer';
+  name?: string;
+  avatarUrl?: string;
+  joinedAt?: string;
+}
+
+export interface SignalingPayload {
+  type: 'offer' | 'answer' | 'ice-candidate' | 'call-ended' | 'peer-status';
+  senderId: string;
+  recipientId?: string;
+  sdp?: RTCSessionDescriptionInit;
+  candidate?: RTCIceCandidateInit;
+  timestamp: number;
+}
