@@ -46,16 +46,18 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
           return;
         }
 
-        const { data: sessionData, error: dbError } = await supabase
-          .rpc('get_interview_session', { p_interview_id: interviewId });
+        const { data: interviewData, error: dbError } = await supabase
+          .schema('private')
+          .from('interviews')
+          .select('*')
+          .eq('id', interviewId)
+          .single();
 
-        if (dbError || !sessionData) {
+        if (dbError || !interviewData) {
           setError('Interview session not found or invalid meeting link.');
           setLoading(false);
           return;
         }
-
-        const interviewData = sessionData as unknown as InterviewRow;
 
         const isCandidate = interviewData.candidate_id === user.id;
         const isInterviewer = interviewData.interviewer_id === user.id;

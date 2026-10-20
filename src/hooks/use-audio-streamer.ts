@@ -84,14 +84,17 @@ export function useAudioStreamer({
         const cloudinaryUrl = uploadData.secure_url || uploadData.url;
         const cloudinaryPublicId = uploadData.public_id;
 
-        // 3. Record chunk via security definer RPC
-        await supabase.rpc('record_interview_chunk', {
-          p_interview_id: interviewId,
-          p_chunk_index: index,
-          p_cloudinary_public_id: cloudinaryPublicId,
-          p_cloudinary_url: cloudinaryUrl,
-          p_duration_seconds: 30,
-        });
+        // 3. Record chunk in private.interview_chunks
+        await supabase
+          .schema('private')
+          .from('interview_chunks')
+          .insert({
+            interview_id: interviewId,
+            chunk_index: index,
+            cloudinary_public_id: cloudinaryPublicId,
+            cloudinary_url: cloudinaryUrl,
+            duration_seconds: 30,
+          });
 
         // 4. Clear from local IndexedDB
         await clearBufferedChunk(interviewId, index);

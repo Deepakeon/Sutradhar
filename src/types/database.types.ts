@@ -75,23 +75,8 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "create_interview_session":
-{ Args: { "p_candidate_id": string,"p_format"?: string,"p_interviewer_id": string,"p_title"?: string }; Returns: Json
-                           },
-"finalize_interview_session":
-{ Args: { "p_duration_seconds": number,"p_interview_id": string,"p_master_recording_url": string,"p_total_chunks": number }; Returns: Json
-                           },
-"get_interview_chunks":
-{ Args: { "p_interview_id": string }; Returns: Json
-                           },
-"get_interview_session":
-{ Args: { "p_interview_id": string }; Returns: Json
-                           },
-"get_my_profile":
+            "get_my_profile":
 { Args: Record<PropertyKey, never>; Returns: Json
-                           },
-"record_interview_chunk":
-{ Args: { "p_chunk_index": number,"p_cloudinary_public_id": string,"p_cloudinary_url": string,"p_duration_seconds"?: number,"p_interview_id": string }; Returns: Json
                            }
           }
           Enums: {

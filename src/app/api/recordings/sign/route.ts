@@ -18,12 +18,20 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Missing interviewId or chunkIndex' }, { status: 400 });
     }
 
-    // Verify profile participation via security definer RPC
-    const { data: interviewData, error: dbError } = await supabase
-      .rpc('get_interview_session', { p_interview_id: interviewId });
+    // Verify profile participation in the interview
+    const { data: interview, error: dbError } = await supabase
+      .schema('private')
+      .from('interviews')
+      .select('id, candidate_id, interviewer_id')
+      .eq('id', interviewId)
+      .single();
 
-    if (dbError || !interviewData) {
-      return NextResponse.json({ error: 'Interview not found or unauthorized' }, { status: 404 });
+    if (dbError || !interview) {
+      return NextResponse.json({ error: 'Interview not found' }, { status: 404 });
+    }
+
+    if (interview.candidate_id !== user.id && interview.interviewer_id !== user.id) {
+      return NextResponse.json({ error: 'Forbidden: Profile not in interview' }, { status: 403 });
     }
 
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'demo';
