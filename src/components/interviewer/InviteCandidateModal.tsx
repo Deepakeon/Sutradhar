@@ -113,13 +113,13 @@ export function InviteCandidateModal({ candidate, onClose }: InviteCandidateModa
             <button
               type="button"
               onClick={onClose}
-              className="btn-outline px-4 py-2 text-xs"
+              className="inline-flex items-center justify-center font-semibold rounded-[6px] border border-[#3d3a39] bg-[#101010] text-[#f2f2f2] hover:border-[#8b949e] hover:bg-[#1a1a1a] transition-all px-4 py-2 text-xs cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="btn-primary px-4 py-2 text-xs"
+              className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all px-4 py-2 text-xs cursor-pointer"
             >
               Send Session Invitation
             </button>

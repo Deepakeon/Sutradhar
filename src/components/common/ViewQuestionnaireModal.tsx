@@ -128,7 +128,7 @@ export function ViewQuestionnaireModal({ session, onClose }: ViewQuestionnaireMo
         <div className="pt-4 border-t border-[#3d3a39] flex justify-end">
           <button
             onClick={onClose}
-            className="btn-outline px-4 py-2 text-xs"
+            className="inline-flex items-center justify-center font-semibold rounded-[6px] border border-[#3d3a39] bg-[#101010] text-[#f2f2f2] hover:border-[#8b949e] hover:bg-[#1a1a1a] transition-all px-4 py-2 text-xs cursor-pointer"
           >
             Close Scorecard
           </button>

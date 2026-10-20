@@ -1,55 +1,75 @@
-'use client';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
 
-import { Navbar } from '@/components/layout/Navbar';
-import { CandidateDashboard } from '@/components/candidate/CandidateDashboard';
-import { InterviewerDashboard } from '@/components/interviewer/InterviewerDashboard';
-import { ToastContainer } from '@/components/common/ToastContainer';
-import { useApp } from '@/context/AppContext';
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
-export default function Home() {
-  const { activeRole, currentUser } = useApp();
+  // If user is already logged in, redirect directly to dashboard
+  if (user) {
+    redirect('/dashboard');
+  }
 
   return (
-    <div className="min-h-screen bg-[#101010] text-[#f2f2f2] flex flex-col justify-between selection:bg-[#00d992]/20 selection:text-[#00d992]">
-      <div>
-        {/* Sticky Global Top Navigation with Role Switcher Dropdown */}
-        <Navbar />
-
-        {/* Main Content Area */}
-        <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {activeRole === 'candidate' ? (
-            <CandidateDashboard />
-          ) : (
-            <InterviewerDashboard />
-          )}
-        </main>
-      </div>
-
-      {/* Footer per DESIGN.md specifications */}
-      <footer className="border-t border-[#3d3a39] bg-[#101010] py-8 mt-12 text-xs text-[#8b949e]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <span className="text-[#00d992] text-sm font-bold">⚡ Sutradhar</span>
-            <span>•</span>
-            <span className="font-mono">Single Account Dual-Role Engine</span>
-            <span>•</span>
-            <span className="text-[#bdbdbd]">{currentUser.email}</span>
+    <div className="flex min-h-screen flex-col bg-[#101010] text-[#f2f2f2]">
+      {/* Navigation Bar */}
+      <header className="border-b border-[#3d3a39] bg-[#101010]">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4 sm:px-8">
+          <div className="flex items-center gap-2">
+            <span className="h-3 w-3 rounded-full bg-[#00d992]" />
+            <span className="font-sans text-lg font-semibold tracking-tight text-[#ffffff]">
+              Sutradhar
+            </span>
           </div>
 
-          <div className="flex items-center gap-6">
-            <span className="flex items-center gap-1.5 text-[11px] font-mono text-[#00d992]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#00d992] animate-pulse" />
-              <span>Role Switcher Active</span>
-            </span>
-            <span className="text-[11px] text-[#8b949e]">
-              Inter & SF Mono Design System
-            </span>
+          <nav className="flex items-center gap-6">
+            <Link
+              href="/login"
+              className="rounded-[6px] border border-[#00d992] bg-[#00d992] px-4 py-2 text-sm font-semibold text-[#101010] transition-colors hover:bg-[#2fd6a1]"
+            >
+              Sign In
+            </Link>
+          </nav>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <main className="flex flex-1 flex-col items-center justify-center px-6 py-24 text-center sm:px-8">
+        <div className="mx-auto max-w-3xl">
+          <h1 className="text-4xl font-normal tracking-tight text-[#ffffff] sm:text-6xl sm:leading-[1.1]">
+            Technical Interview Partner Matching &amp; Evaluation
+          </h1>
+
+          <p className="mt-6 text-lg leading-8 text-[#bdbdbd]">
+            Connect with compatible peers for mock technical interviews, record
+            sessions with automated retention, and receive AI-generated
+            questionnaires and feedback.
+          </p>
+
+          <div className="mt-10 flex items-center justify-center gap-4">
+            <Link
+              href="/login"
+              className="rounded-[6px] bg-[#00d992] px-6 py-3 text-base font-semibold text-[#101010] transition-colors hover:bg-[#2fd6a1] focus-visible:outline focus-visible:outline-1 focus-visible:outline-[#00d992]"
+            >
+              Sign in with Google
+            </Link>
+            <Link
+              href="/dashboard"
+              className="rounded-[6px] border border-[#3d3a39] bg-[#101010] px-6 py-3 text-base font-semibold text-[#f2f2f2] transition-colors hover:border-[#8b949e] hover:bg-[#1a1a1a]"
+            >
+              Dashboard
+            </Link>
           </div>
         </div>
-      </footer>
+      </main>
 
-      {/* Toast Feedback Notifications */}
-      <ToastContainer />
+      {/* Footer */}
+      <footer className="border-t border-[#3d3a39] bg-[#101010] py-8 text-center text-xs text-[#8b949e]">
+        <p>&copy; 2026 Sutradhar. Designed for technical mock interviews.</p>
+      </footer>
     </div>
   );
 }

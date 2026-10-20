@@ -231,8 +231,15 @@ export function Navbar() {
                   </button>
 
                   <div className="mt-2 pt-2 border-t border-[#3d3a39]/70 px-2 flex items-center justify-between text-[11px] text-[#8b949e]">
-                    <span>Account: {currentUser.email}</span>
-                    <span className="text-[#00d992] font-mono">Synced</span>
+                    <span className="truncate max-w-[180px]">Account: {currentUser.email}</span>
+                    <form action="/auth/signout" method="POST">
+                      <button
+                        type="submit"
+                        className="text-[#8b949e] hover:text-[#f87171] transition-colors cursor-pointer font-medium"
+                      >
+                        Sign Out
+                      </button>
+                    </form>
                   </div>
                 </div>
               )}

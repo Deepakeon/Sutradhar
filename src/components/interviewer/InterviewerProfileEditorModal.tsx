@@ -375,7 +375,7 @@ export function InterviewerProfileEditorModal({
 
                 <button
                   type="submit"
-                  className="btn-primary px-4 py-2 text-xs cursor-pointer"
+                  className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all px-4 py-2 text-xs cursor-pointer"
                 >
                   Add Capability to Portfolio
                 </button>
@@ -452,7 +452,7 @@ export function InterviewerProfileEditorModal({
           <button
             type="button"
             onClick={onClose}
-            className="btn-outline px-4 py-2 text-xs"
+            className="inline-flex items-center justify-center font-semibold rounded-[6px] border border-[#3d3a39] bg-[#101010] text-[#f2f2f2] hover:border-[#8b949e] hover:bg-[#1a1a1a] transition-all px-4 py-2 text-xs cursor-pointer"
           >
             Close
           </button>
@@ -460,7 +460,7 @@ export function InterviewerProfileEditorModal({
             <button
               type="submit"
               form="interviewer-context-form"
-              className="btn-primary px-4 py-2 text-xs"
+              className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all px-4 py-2 text-xs cursor-pointer"
             >
               Save Philosophy & Formats
             </button>
@@ -469,7 +469,7 @@ export function InterviewerProfileEditorModal({
             <button
               type="submit"
               form="interviewer-credentials-form"
-              className="btn-primary px-4 py-2 text-xs"
+              className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all px-4 py-2 text-xs cursor-pointer"
             >
               Save Credentials
             </button>

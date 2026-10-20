@@ -107,7 +107,7 @@ export function InterviewerDashboard() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleOpenEditor('context')}
-                className="btn-primary text-xs px-3.5 py-1.5 cursor-pointer flex items-center gap-1.5"
+                className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all text-xs px-3.5 py-1.5 cursor-pointer flex items-center gap-1.5"
               >
                 <span>✎</span>
                 <span>Edit Portfolio</span>
@@ -179,7 +179,7 @@ export function InterviewerDashboard() {
                 </button>
                 <button
                   onClick={() => handleOpenEditor('context')}
-                  className="btn-outline text-[11px] px-3 py-1 cursor-pointer"
+                  className="inline-flex items-center justify-center font-semibold rounded-[6px] border border-[#3d3a39] bg-[#101010] text-[#f2f2f2] hover:border-[#8b949e] hover:bg-[#1a1a1a] transition-all text-[11px] px-3 py-1 cursor-pointer"
                 >
                   ✎ Edit Portfolio
                 </button>
@@ -234,13 +234,13 @@ export function InterviewerDashboard() {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleAcceptRequest(pendingRequests[0].id)}
-                          className="btn-primary text-[11px] px-3 py-1 cursor-pointer"
+                          className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all text-[11px] px-3 py-1 cursor-pointer"
                         >
                           Accept
                         </button>
                         <button
                           onClick={() => handleDeclineRequest(pendingRequests[0].id)}
-                          className="btn-outline text-[11px] px-3 py-1 text-red-400 hover:text-red-300 cursor-pointer"
+                          className="inline-flex items-center justify-center font-semibold rounded-[6px] border border-[#3d3a39] bg-[#101010] text-[#f2f2f2] hover:border-red-500/40 hover:bg-[#1a1a1a] transition-all text-[11px] px-3 py-1 text-red-400 hover:text-red-300 cursor-pointer"
                         >
                           Decline
                         </button>
@@ -284,14 +284,14 @@ export function InterviewerDashboard() {
                           href={nextUpcomingSession.meetingUrl}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="btn-primary text-[11px] px-3 py-1 flex items-center gap-1 cursor-pointer"
+                          className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all text-[11px] px-3 py-1 flex items-center gap-1 cursor-pointer"
                         >
                           <span>⚡ Launch</span>
                         </a>
                       )}
                       <button
                         onClick={() => setEvaluatingSession(nextUpcomingSession)}
-                        className="btn-outline text-[11px] px-2.5 py-1 cursor-pointer"
+                        className="inline-flex items-center justify-center font-semibold rounded-[6px] border border-[#3d3a39] bg-[#101010] text-[#f2f2f2] hover:border-[#8b949e] hover:bg-[#1a1a1a] transition-all text-[11px] px-2.5 py-1 cursor-pointer"
                       >
                         Evaluate
                       </button>
@@ -418,13 +418,13 @@ export function InterviewerDashboard() {
                         <div className="flex items-center gap-2 w-full justify-end">
                           <button
                             onClick={() => handleAcceptRequest(session.id)}
-                            className="btn-primary text-[10.5px] px-2.5 py-1 cursor-pointer"
+                            className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all text-[10.5px] px-2.5 py-1 cursor-pointer"
                           >
                             Accept
                           </button>
                           <button
                             onClick={() => handleDeclineRequest(session.id)}
-                            className="btn-outline text-[10.5px] px-2.5 py-1 text-red-400 hover:text-red-300 cursor-pointer"
+                            className="inline-flex items-center justify-center font-semibold rounded-[6px] border border-[#3d3a39] bg-[#101010] text-[#f2f2f2] hover:border-red-500/40 hover:bg-[#1a1a1a] transition-all text-[10.5px] px-2.5 py-1 text-red-400 hover:text-red-300 cursor-pointer"
                           >
                             Decline
                           </button>
@@ -438,14 +438,14 @@ export function InterviewerDashboard() {
                               href={session.meetingUrl}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="btn-primary text-[10.5px] px-2.5 py-1 flex items-center gap-1 cursor-pointer"
+                              className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all text-[10.5px] px-2.5 py-1 flex items-center gap-1 cursor-pointer"
                             >
                               <span>⚡ Launch</span>
                             </a>
                           )}
                           <button
                             onClick={() => setEvaluatingSession(session)}
-                            className="btn-outline text-[10.5px] px-2.5 py-1 cursor-pointer"
+                            className="inline-flex items-center justify-center font-semibold rounded-[6px] border border-[#3d3a39] bg-[#101010] text-[#f2f2f2] hover:border-[#8b949e] hover:bg-[#1a1a1a] transition-all text-[10.5px] px-2.5 py-1 cursor-pointer"
                           >
                             Evaluate
                           </button>
@@ -455,7 +455,7 @@ export function InterviewerDashboard() {
                       {isCompleted && session.questionnaire && (
                         <button
                           onClick={() => setViewingScorecardSession(session)}
-                          className="btn-primary text-[10.5px] px-3 py-1 w-full cursor-pointer"
+                          className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all text-[10.5px] px-3 py-1 w-full cursor-pointer"
                         >
                           ★ View Scorecard
                         </button>
@@ -542,7 +542,7 @@ export function InterviewerDashboard() {
                     </span>
                     <button
                       onClick={() => setSelectedCandidate(candidate)}
-                      className="btn-primary text-[10.5px] px-3 py-1 cursor-pointer"
+                      className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all text-[10.5px] px-3 py-1 cursor-pointer"
                     >
                       Invite to Mock
                     </button>
@@ -684,7 +684,7 @@ export function InterviewerDashboard() {
                 </span>
                 <button
                   onClick={() => handleOpenEditor('context')}
-                  className="btn-outline text-[11px] px-3 py-1 cursor-pointer"
+                  className="inline-flex items-center justify-center font-semibold rounded-[6px] border border-[#3d3a39] bg-[#101010] text-[#f2f2f2] hover:border-[#8b949e] hover:bg-[#1a1a1a] transition-all text-[11px] px-3 py-1 cursor-pointer"
                 >
                   ✎ Edit Portfolio
                 </button>
@@ -712,7 +712,7 @@ export function InterviewerDashboard() {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => handleOpenEditor('context')}
-                className="btn-primary text-xs px-4 py-2 cursor-pointer flex items-center gap-2"
+                className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all text-xs px-4 py-2 cursor-pointer flex items-center gap-2"
               >
                 <span>✎</span>
                 <span>Edit Portfolio</span>
@@ -754,7 +754,7 @@ export function InterviewerDashboard() {
                   <span className="text-xs font-mono text-[#8b949e] uppercase">Domains Assessed</span>
                   <div className="flex flex-wrap gap-2 mt-1.5">
                     {profile.domains.map((dom) => (
-                      <span key={dom} className="pill-tag text-xs font-medium">
+                      <span key={dom} className="inline-flex items-center gap-1.5 rounded-full border border-[#3d3a39] bg-[#101010] px-2.5 py-0.5 text-xs font-medium text-[#f2f2f2]">
                         {dom}
                       </span>
                     ))}
@@ -999,7 +999,7 @@ export function InterviewerDashboard() {
                   <div className="space-y-2 pt-2 border-t border-[#3d3a39]/70">
                     <div className="flex flex-wrap gap-1.5">
                       {candidate.keySkills.map((sk) => (
-                        <span key={sk} className="pill-tag text-[11px]">
+                        <span key={sk} className="inline-flex items-center gap-1.5 rounded-full border border-[#3d3a39] bg-[#101010] px-2 py-0.5 text-[11px] text-[#f2f2f2]">
                           {sk}
                         </span>
                       ))}
@@ -1018,7 +1018,7 @@ export function InterviewerDashboard() {
                   </span>
                   <button
                     onClick={() => setSelectedCandidate(candidate)}
-                    className="btn-primary text-xs px-4 py-2 cursor-pointer"
+                    className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all text-xs px-4 py-2 cursor-pointer"
                   >
                     Invite to Mock Session
                   </button>
@@ -1072,7 +1072,7 @@ export function InterviewerDashboard() {
               </p>
               <button
                 onClick={() => setActiveTab('match')}
-                className="btn-primary text-xs px-4 py-2 mt-2 cursor-pointer"
+                className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all text-xs px-4 py-2 mt-2 cursor-pointer"
               >
                 Browse Candidates
               </button>
@@ -1129,13 +1129,13 @@ export function InterviewerDashboard() {
                           <>
                             <button
                               onClick={() => handleAcceptRequest(session.id)}
-                              className="btn-primary text-xs px-3.5 py-1.5 cursor-pointer"
+                              className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all text-xs px-3.5 py-1.5 cursor-pointer"
                             >
                               Accept Request
                             </button>
                             <button
                               onClick={() => handleDeclineRequest(session.id)}
-                              className="btn-outline text-xs px-3 py-1.5 text-red-400 hover:text-red-300 cursor-pointer"
+                              className="inline-flex items-center justify-center font-semibold rounded-[6px] border border-[#3d3a39] bg-[#101010] text-[#f2f2f2] hover:border-red-500/40 hover:bg-[#1a1a1a] transition-all text-xs px-3 py-1.5 text-red-400 hover:text-red-300 cursor-pointer"
                             >
                               Decline
                             </button>
@@ -1149,14 +1149,14 @@ export function InterviewerDashboard() {
                                 href={session.meetingUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="btn-primary text-xs px-3.5 py-1.5 flex items-center gap-1.5 cursor-pointer"
+                                className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all text-xs px-3.5 py-1.5 flex items-center gap-1.5 cursor-pointer"
                               >
                                 <span>⚡ Launch Room</span>
                               </a>
                             )}
                             <button
                               onClick={() => setEvaluatingSession(session)}
-                              className="btn-outline text-xs px-3.5 py-1.5 cursor-pointer"
+                              className="inline-flex items-center justify-center font-semibold rounded-[6px] border border-[#3d3a39] bg-[#101010] text-[#f2f2f2] hover:border-[#8b949e] hover:bg-[#1a1a1a] transition-all text-xs px-3.5 py-1.5 cursor-pointer"
                             >
                               Complete & Evaluate
                             </button>
@@ -1166,7 +1166,7 @@ export function InterviewerDashboard() {
                         {isCompleted && session.questionnaire && (
                           <button
                             onClick={() => setViewingScorecardSession(session)}
-                            className="btn-primary text-xs px-3.5 py-1.5 flex items-center gap-1.5 cursor-pointer"
+                            className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all text-xs px-3.5 py-1.5 flex items-center gap-1.5 cursor-pointer"
                           >
                             <span>★ View Submitted Scorecard</span>
                           </button>
@@ -1252,14 +1252,14 @@ export function InterviewerDashboard() {
                     {hasScorecard ? (
                       <button
                         onClick={() => setViewingScorecardSession(session)}
-                        className="btn-outline text-xs px-3.5 py-1.5 cursor-pointer"
+                        className="inline-flex items-center justify-center font-semibold rounded-[6px] border border-[#3d3a39] bg-[#101010] text-[#f2f2f2] hover:border-[#8b949e] hover:bg-[#1a1a1a] transition-all text-xs px-3.5 py-1.5 cursor-pointer"
                       >
                         Review Scorecard
                       </button>
                     ) : (
                       <button
                         onClick={() => setEvaluatingSession(session)}
-                        className="btn-primary text-xs px-3.5 py-1.5 cursor-pointer"
+                        className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all text-xs px-3.5 py-1.5 cursor-pointer"
                       >
                         Fill Questionnaire
                       </button>
