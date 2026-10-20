@@ -3,25 +3,7 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 
 export type Database = {
   
-  "graphql_public": {
-          Tables: {
-            [_ in never]: never
-          }
-          Views: {
-            [_ in never]: never
-          }
-          Functions: {
-            "graphql":
-{ Args: { "extensions"?: Json,"operationName"?: string,"query"?: string,"variables"?: Json }; Returns: Json
-                           }
-          }
-          Enums: {
-            [_ in never]: never
-          }
-          CompositeTypes: {
-            [_ in never]: never
-          }
-        },"public": {
+  "private": {
           Tables: {
             "interview_chunks": {
                   Row: {
@@ -57,14 +39,59 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"profiles": {
+                  Row: {
+                    "avatar_url": string | null,"created_at": string,"email": string | null,"full_name": string | null,"id": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "avatar_url"?: string | null,"created_at"?: string,"email"?: string | null,"full_name"?: string | null,"id": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "avatar_url"?: string | null,"created_at"?: string,"email"?: string | null,"full_name"?: string | null,"id"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 }
           }
           Views: {
             [_ in never]: never
           }
           Functions: {
-            "get_my_profile":
+            [_ in never]: never
+          }
+          Enums: {
+            [_ in never]: never
+          }
+          CompositeTypes: {
+            [_ in never]: never
+          }
+        },"public": {
+          Tables: {
+            [_ in never]: never
+          }
+          Views: {
+            [_ in never]: never
+          }
+          Functions: {
+            "create_interview_session":
+{ Args: { "p_candidate_id": string,"p_format"?: string,"p_interviewer_id": string,"p_title"?: string }; Returns: Json
+                           },
+"finalize_interview_session":
+{ Args: { "p_duration_seconds": number,"p_interview_id": string,"p_master_recording_url": string,"p_total_chunks": number }; Returns: Json
+                           },
+"get_interview_chunks":
+{ Args: { "p_interview_id": string }; Returns: Json
+                           },
+"get_interview_session":
+{ Args: { "p_interview_id": string }; Returns: Json
+                           },
+"get_my_profile":
 { Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"record_interview_chunk":
+{ Args: { "p_chunk_index": number,"p_cloudinary_public_id": string,"p_cloudinary_url": string,"p_duration_seconds"?: number,"p_interview_id": string }; Returns: Json
                            }
           }
           Enums: {
@@ -182,7 +209,7 @@ export type CompositeTypes<
   : never
 
 export const Constants = {
-  "graphql_public": {
+  "private": {
           Enums: {
             
           }

@@ -1,11 +1,11 @@
 import { Database } from './database.types';
 
-export type InterviewRow = Database['public']['Tables']['interviews']['Row'];
-export type InterviewInsert = Database['public']['Tables']['interviews']['Insert'];
-export type InterviewUpdate = Database['public']['Tables']['interviews']['Update'];
+export type InterviewRow = Database['private']['Tables']['interviews']['Row'];
+export type InterviewInsert = Database['private']['Tables']['interviews']['Insert'];
+export type InterviewUpdate = Database['private']['Tables']['interviews']['Update'];
 
-export type InterviewChunkRow = Database['public']['Tables']['interview_chunks']['Row'];
-export type InterviewChunkInsert = Database['public']['Tables']['interview_chunks']['Insert'];
+export type InterviewChunkRow = Database['private']['Tables']['interview_chunks']['Row'];
+export type InterviewChunkInsert = Database['private']['Tables']['interview_chunks']['Insert'];
 
 export type InterviewStatus = 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled' | 'declined';
 

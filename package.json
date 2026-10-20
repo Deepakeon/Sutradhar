@@ -16,7 +16,8 @@
     "supabase:db-diff": "supabase db diff",
     "supabase:db-push": "supabase db push",
     "supabase:db-pull": "supabase db pull",
-    "supabase:gen-types": "supabase gen types typescript --local > src/types/database.types.ts"
+    "supabase:gen-types": "supabase gen types typescript --local --schema public,private > src/types/database.types.ts",
+    "supabase:seed-meeting": "supabase db query -f supabase/snippets/seed_test_meeting.sql"
   },
   "dependencies": {
     "@supabase/ssr": "^0.12.7",

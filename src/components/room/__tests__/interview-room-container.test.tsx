@@ -13,7 +13,7 @@ vi.mock('next/navigation', () => ({
 
 // Mock Supabase client
 const mockGetUser = vi.fn();
-const mockFrom = vi.fn();
+const mockRpc = vi.fn();
 const mockChannel = vi.fn();
 const mockRemoveChannel = vi.fn();
 
@@ -22,7 +22,7 @@ vi.mock('@/lib/supabase/client', () => ({
     auth: {
       getUser: mockGetUser,
     },
-    from: mockFrom,
+    rpc: mockRpc,
     channel: mockChannel,
     removeChannel: mockRemoveChannel,
   }),
@@ -115,18 +115,19 @@ describe('Room Container Seam (/room/[id])', () => {
       error: null,
     });
 
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: {
-          id: 'session-123',
-          candidate_id: 'candidate-id',
-          interviewer_id: 'interviewer-id',
-          title: 'Senior Frontend Architecture',
-        },
-        error: null,
-      }),
+    mockRpc.mockImplementation((fn: string) => {
+      if (fn === 'get_interview_session') {
+        return Promise.resolve({
+          data: {
+            id: 'session-123',
+            candidate_id: 'candidate-id',
+            interviewer_id: 'interviewer-id',
+            title: 'Senior Frontend Architecture',
+          },
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: null, error: null });
     });
 
     render(<InterviewRoomContainer interviewId="session-123" />);
@@ -145,18 +146,19 @@ describe('Room Container Seam (/room/[id])', () => {
       error: null,
     });
 
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: {
-          id: 'session-123',
-          candidate_id: 'candidate-id',
-          interviewer_id: 'interviewer-id',
-          title: 'Fullstack Systems Interview',
-        },
-        error: null,
-      }),
+    mockRpc.mockImplementation((fn: string) => {
+      if (fn === 'get_interview_session') {
+        return Promise.resolve({
+          data: {
+            id: 'session-123',
+            candidate_id: 'candidate-id',
+            interviewer_id: 'interviewer-id',
+            title: 'Fullstack Systems Interview',
+          },
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: null, error: null });
     });
 
     render(<InterviewRoomContainer interviewId="session-123" />);
@@ -180,18 +182,19 @@ describe('Room Container Seam (/room/[id])', () => {
       error: null,
     });
 
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: {
-          id: 'session-123',
-          candidate_id: 'candidate-id',
-          interviewer_id: 'interviewer-id',
-          title: 'Systems Interview',
-        },
-        error: null,
-      }),
+    mockRpc.mockImplementation((fn: string) => {
+      if (fn === 'get_interview_session') {
+        return Promise.resolve({
+          data: {
+            id: 'session-123',
+            candidate_id: 'candidate-id',
+            interviewer_id: 'interviewer-id',
+            title: 'Systems Interview',
+          },
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: null, error: null });
     });
 
     render(<InterviewRoomContainer interviewId="session-123" />);
@@ -226,18 +229,19 @@ describe('Room Container Seam (/room/[id])', () => {
       error: null,
     });
 
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: {
-          id: 'session-123',
-          candidate_id: 'candidate-id',
-          interviewer_id: 'interviewer-id',
-          title: 'Systems Interview',
-        },
-        error: null,
-      }),
+    mockRpc.mockImplementation((fn: string) => {
+      if (fn === 'get_interview_session') {
+        return Promise.resolve({
+          data: {
+            id: 'session-123',
+            candidate_id: 'candidate-id',
+            interviewer_id: 'interviewer-id',
+            title: 'Systems Interview',
+          },
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: null, error: null });
     });
 
     render(<InterviewRoomContainer interviewId="session-123" />);
@@ -267,18 +271,19 @@ describe('Room Container Seam (/room/[id])', () => {
       error: null,
     });
 
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: {
-          id: 'session-123',
-          candidate_id: 'candidate-id',
-          interviewer_id: 'interviewer-id',
-          title: 'Backend Scalability Call',
-        },
-        error: null,
-      }),
+    mockRpc.mockImplementation((fn: string) => {
+      if (fn === 'get_interview_session') {
+        return Promise.resolve({
+          data: {
+            id: 'session-123',
+            candidate_id: 'candidate-id',
+            interviewer_id: 'interviewer-id',
+            title: 'Backend Scalability Call',
+          },
+          error: null,
+        });
+      }
+      return Promise.resolve({ data: null, error: null });
     });
 
     // Mock fetch for finalization
