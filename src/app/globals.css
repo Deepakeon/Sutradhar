@@ -3,6 +3,8 @@
 :root {
   --canvas: #101010;
   --canvas-soft: #1a1a1a;
+  --hairline: #3d3a39;
+  --hairline-soft: #b8b3b0;
   --primary: #00d992;
   --primary-soft: #2fd6a1;
   --primary-deep: #10b981;
@@ -11,16 +13,17 @@
   --ink-strong: #ffffff;
   --body: #bdbdbd;
   --mute: #8b949e;
-  --hairline: #3d3a39;
-  --hairline-soft: #b8b3b0;
+  --canvas-text-soft: #f5f6f7;
 
-  --background: var(--canvas);
-  --foreground: var(--ink);
+  --background: #101010;
+  --foreground: #f2f2f2;
 }
 
 @theme inline {
   --color-canvas: var(--canvas);
   --color-canvas-soft: var(--canvas-soft);
+  --color-hairline: var(--hairline);
+  --color-hairline-soft: var(--hairline-soft);
   --color-primary: var(--primary);
   --color-primary-soft: var(--primary-soft);
   --color-primary-deep: var(--primary-deep);
@@ -29,13 +32,17 @@
   --color-ink-strong: var(--ink-strong);
   --color-body: var(--body);
   --color-mute: var(--mute);
-  --color-hairline: var(--hairline);
-  --color-hairline-soft: var(--hairline-soft);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  --font-mono: var(--font-mono, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace);
 }
 
+html,
 body {
-  background-color: var(--canvas);
-  color: var(--ink);
-  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
-  min-height: 100vh;
+  background-color: #101010;
+  color: #f2f2f2;
+  min-height: 100%;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
 }

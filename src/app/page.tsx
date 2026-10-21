@@ -1,6 +1,18 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
 
-export default function Home() {
+export default async function Home() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  // If user is already logged in, redirect directly to dashboard
+  if (user) {
+    redirect('/dashboard');
+  }
+
   return (
     <div className="flex min-h-screen flex-col bg-[#101010] text-[#f2f2f2]">
       {/* Navigation Bar */}
@@ -27,7 +39,6 @@ export default function Home() {
       {/* Hero Section */}
       <main className="flex flex-1 flex-col items-center justify-center px-6 py-24 text-center sm:px-8">
         <div className="mx-auto max-w-3xl">
-
           <h1 className="text-4xl font-normal tracking-tight text-[#ffffff] sm:text-6xl sm:leading-[1.1]">
             Technical Interview Partner Matching &amp; Evaluation
           </h1>
