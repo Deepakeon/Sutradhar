@@ -68,7 +68,7 @@ export function LoginForm() {
         type="button"
         onClick={handleGoogleLogin}
         disabled={loading}
-        className="group relative flex w-full items-center justify-center gap-3 rounded-[6px] border border-[#3d3a39] bg-[#101010] px-4 py-3 text-sm font-semibold text-[#f2f2f2] transition-all hover:border-[#00d992] hover:bg-[#151515] hover:text-[#ffffff] focus:outline-none focus:ring-1 focus:ring-[#00d992] disabled:cursor-not-allowed disabled:opacity-50"
+        className="group relative flex w-full items-center justify-center gap-3 rounded-[6px] border border-[#3d3a39] bg-[#101010] px-4 py-3 text-sm font-semibold text-[#f2f2f2] transition-all hover:border-[#00d992] hover:bg-[#151515] hover:text-[#ffffff] focus:outline-none focus:ring-1 focus:ring-[#00d992] disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer"
       >
         {loading ? (
           <div className="flex items-center gap-2">
