@@ -20,7 +20,7 @@ export function InterviewerDashboard() {
     showToast
   } = useApp();
 
-  const profile = currentUser.interviewerProfile;
+  const profile = currentUser?.interviewerProfile;
 
   // Modals state
   const [selectedCandidate, setSelectedCandidate] = useState<MatchingCandidate | null>(null);
@@ -37,7 +37,7 @@ export function InterviewerDashboard() {
   const [sessionsFilter, setSessionsFilter] = useState<'all' | 'pending' | 'accepted' | 'completed'>('all');
 
   // Sessions where current user is interviewer
-  const interviewerSessions = sessions.filter((s) => s.interviewerId === currentUser.id);
+  const interviewerSessions = sessions.filter((s) => s.interviewerId === currentUser?.id);
 
   const pendingRequests = interviewerSessions.filter((s) => s.status === 'pending');
   const acceptedSessions = interviewerSessions.filter((s) => s.status === 'accepted');
@@ -81,7 +81,7 @@ export function InterviewerDashboard() {
 
   const handleDeleteSkill = (skillId: string) => {
     updateInterviewerProfile({
-      skills: profile.skills.filter((s) => s.id !== skillId)
+      skills: profile?.skills?.filter((s) => s.id !== skillId)
     });
     showToast('Assessment capability removed', 'info');
   };
@@ -132,38 +132,38 @@ export function InterviewerDashboard() {
                 <div className="flex items-start gap-3.5">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src={currentUser.avatar}
-                    alt={currentUser.name}
+                    src={currentUser?.avatar}
+                    alt={currentUser?.name}
                     className="w-14 h-14 rounded-full border border-[#3d3a39] object-cover ring-2 ring-[#00d992]/30 flex-shrink-0"
                   />
                   <div className="min-w-0">
                     <h2 className="text-base font-bold text-[#ffffff] truncate">
-                      {currentUser.name}
+                      {currentUser?.name}
                     </h2>
                     <p className="text-xs text-[#00d992] font-semibold mt-0.5">
-                      {profile.experience.primaryCompany} • {profile.experience.yearsInterviewing} yrs tenure
+                      {profile?.experience.primaryCompany} • {profile?.experience.yearsInterviewing} yrs tenure
                     </p>
                     <div className="flex items-center gap-2 mt-1 text-xs font-mono text-[#8b949e]">
-                      <span className="text-amber-300 font-bold">★ {profile.experience.averageRating}</span>
+                      <span className="text-amber-300 font-bold">★ {profile?.experience.averageRating}</span>
                       <span>•</span>
-                      <span>{profile.experience.totalInterviewsConducted}+ mocks</span>
+                      <span>{profile?.experience.totalInterviewsConducted}+ mocks</span>
                     </div>
                   </div>
                 </div>
 
                 <p className="text-xs text-[#bdbdbd] line-clamp-2 leading-relaxed">
-                  {profile.headline}
+                  {profile?.headline}
                 </p>
 
                 <div className="flex flex-wrap gap-1.5 pt-1">
-                  {profile.domains.slice(0, 3).map((dom) => (
+                  {profile?.domains?.slice(0, 3).map((dom) => (
                     <span key={dom} className="text-[10.5px] font-mono px-2 py-0.5 rounded-[4px] bg-[#101010] border border-[#3d3a39] text-[#bdbdbd]">
                       {dom}
                     </span>
                   ))}
-                  {profile.domains.length > 3 && (
+                  {(profile?.domains?.length ?? 0) > 3 && (
                     <span className="text-[10.5px] font-mono px-1.5 py-0.5 text-[#8b949e]">
-                      +{profile.domains.length - 3} more
+                      +{(profile?.domains?.length || 0) - 3} more
                     </span>
                   )}
                 </div>
@@ -171,7 +171,7 @@ export function InterviewerDashboard() {
 
               <div className="pt-3 border-t border-[#3d3a39]/70 flex items-center justify-between">
                 <button
-                  onClick={() => setActiveTab('profile')}
+                  onClick={() => setActiveTab('profile?')}
                   className="text-xs font-semibold text-[#2fd6a1] hover:text-[#00d992] transition-colors cursor-pointer flex items-center gap-1"
                 >
                   <span>View Full Profile</span>
@@ -647,7 +647,7 @@ export function InterviewerDashboard() {
                 <div>
                   <span className="text-[10.5px] font-mono text-[#8b949e] uppercase">Formats Evaluated</span>
                   <div className="space-y-1 mt-1">
-                    {profile.context.sessionFormats.map((fmt) => (
+                    {profile?.context.sessionFormats.map((fmt) => (
                       <div key={fmt} className="text-xs font-mono text-[#f2f2f2] bg-[#101010] p-1.5 rounded border border-[#3d3a39] truncate">
                         ✓ {fmt}
                       </div>
@@ -658,20 +658,20 @@ export function InterviewerDashboard() {
                 <div>
                   <span className="text-[10.5px] font-mono text-[#8b949e] uppercase">Weekly Schedule</span>
                   <p className="text-xs text-[#bdbdbd] mt-1 font-mono bg-[#101010] p-2 rounded border border-[#3d3a39]">
-                    {profile.context.availabilitySchedule}
+                    {profile?.context.availabilitySchedule}
                   </p>
                 </div>
 
                 <div>
                   <div className="flex justify-between items-center text-[10.5px] font-mono">
                     <span className="text-[#8b949e] uppercase">Capacity Load</span>
-                    <span className="text-[#00d992] font-semibold">{acceptedSessions.length} / {profile.context.maxSessionsPerWeek} slots booked</span>
+                    <span className="text-[#00d992] font-semibold">{acceptedSessions.length} / {profile?.context.maxSessionsPerWeek} slots booked</span>
                   </div>
                   <div className="h-1.5 w-full bg-[#101010] rounded-full overflow-hidden border border-[#3d3a39] mt-1">
                     <div
                       className="h-full bg-[#00d992] rounded-full transition-all duration-300"
                       style={{
-                        width: `${Math.min(100, (acceptedSessions.length / (profile.context.maxSessionsPerWeek || 1)) * 100)}%`
+                        width: `${Math.min(100, (acceptedSessions.length / (profile?.context.maxSessionsPerWeek || 1)) * 100)}%`
                       }}
                     />
                   </div>
@@ -680,7 +680,7 @@ export function InterviewerDashboard() {
 
               <div className="pt-3 border-t border-[#3d3a39]/70 flex items-center justify-between">
                 <span className="text-[11px] text-[#00d992] font-mono">
-                  {profile.context.hourlyHonorarium}
+                  {profile?.context.hourlyHonorarium}
                 </span>
                 <button
                   onClick={() => handleOpenEditor('context')}
@@ -697,7 +697,7 @@ export function InterviewerDashboard() {
       {/* ─────────────────────────────────────────────────────────────────────────────
           2. MY PROFILE SECTION: Unified "Edit Portfolio" Entry
          ───────────────────────────────────────────────────────────────────────────── */}
-      {activeTab === 'profile' && (
+      {activeTab === 'profile?' && (
         <div className="space-y-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#3d3a39]">
             <div>
@@ -739,21 +739,21 @@ export function InterviewerDashboard() {
                 <div>
                   <span className="text-xs font-mono text-[#8b949e] uppercase">Headline</span>
                   <p className="text-base text-[#f2f2f2] font-semibold mt-1">
-                    {profile.headline}
+                    {profile?.headline}
                   </p>
                 </div>
 
                 <div>
                   <span className="text-xs font-mono text-[#8b949e] uppercase">Evaluation Philosophy</span>
                   <p className="text-sm text-[#bdbdbd] mt-1 leading-relaxed">
-                    {profile.context.interviewPhilosophy}
+                    {profile?.context.interviewPhilosophy}
                   </p>
                 </div>
 
                 <div>
                   <span className="text-xs font-mono text-[#8b949e] uppercase">Domains Assessed</span>
                   <div className="flex flex-wrap gap-2 mt-1.5">
-                    {profile.domains.map((dom) => (
+                    {profile?.domains.map((dom) => (
                       <span key={dom} className="inline-flex items-center gap-1.5 rounded-full border border-[#3d3a39] bg-[#101010] px-2.5 py-0.5 text-xs font-medium text-[#f2f2f2]">
                         {dom}
                       </span>
@@ -766,7 +766,7 @@ export function InterviewerDashboard() {
                 <div>
                   <span className="text-xs font-mono text-[#8b949e] uppercase">Mock Session Formats Offered</span>
                   <div className="space-y-2 mt-1.5">
-                    {profile.context.sessionFormats.map((fmt) => (
+                    {profile?.context.sessionFormats.map((fmt) => (
                       <div key={fmt} className="p-2.5 rounded-[8px] bg-[#111111] border border-[#3d3a39] text-xs font-medium text-[#f2f2f2]">
                         ✦ {fmt}
                       </div>
@@ -778,13 +778,13 @@ export function InterviewerDashboard() {
                   <div>
                     <span className="text-xs font-mono text-[#8b949e] uppercase">Availability Schedule</span>
                     <p className="text-xs text-[#f2f2f2] font-mono mt-1">
-                      {profile.context.availabilitySchedule}
+                      {profile?.context.availabilitySchedule}
                     </p>
                   </div>
                   <div>
                     <span className="text-xs font-mono text-[#8b949e] uppercase">Max Sessions / Wk</span>
                     <p className="text-sm text-[#f2f2f2] font-mono mt-1">
-                      {profile.context.maxSessionsPerWeek} sessions
+                      {profile?.context.maxSessionsPerWeek} sessions
                     </p>
                   </div>
                 </div>
@@ -792,7 +792,7 @@ export function InterviewerDashboard() {
                 <div>
                   <span className="text-xs font-mono text-[#8b949e] uppercase">Model / Honorarium</span>
                   <p className="text-xs text-[#00d992] font-mono mt-1">
-                    {profile.context.hourlyHonorarium}
+                    {profile?.context.hourlyHonorarium}
                   </p>
                 </div>
               </div>
@@ -803,7 +803,7 @@ export function InterviewerDashboard() {
           <div className="rounded-[12px] bg-[#1a1a1a] border border-[#3d3a39] p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#3d3a39]/70">
               <span className="text-xs font-mono uppercase tracking-[2.52px] text-[#8b949e]">
-                02 • SPECIALIZED EVALUATION SKILLS ({profile.skills.length})
+                02 • SPECIALIZED EVALUATION SKILLS ({profile?.skills.length})
               </span>
               <button
                 onClick={() => handleOpenEditor('skill')}
@@ -814,7 +814,7 @@ export function InterviewerDashboard() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {profile.skills.map((skill) => (
+              {profile?.skills.map((skill) => (
                 <div
                   key={skill.id}
                   className="p-4 rounded-[10px] bg-[#111111] border border-[#3d3a39] flex items-center justify-between group hover:border-[#00d992]/50 transition-colors shadow-xs"
@@ -862,27 +862,27 @@ export function InterviewerDashboard() {
               <div className="p-4 rounded-[10px] bg-[#111111] border border-[#3d3a39] shadow-xs">
                 <span className="text-xs font-mono text-[#8b949e] uppercase">Primary Company</span>
                 <p className="text-base font-semibold text-[#f2f2f2] mt-1">
-                  {profile.experience.primaryCompany}
+                  {profile?.experience.primaryCompany}
                 </p>
                 <span className="text-xs text-[#00d992] font-mono">
-                  {profile.experience.yearsInterviewing} years active interviewing
+                  {profile?.experience.yearsInterviewing} years active interviewing
                 </span>
               </div>
 
               <div className="p-4 rounded-[10px] bg-[#111111] border border-[#3d3a39] shadow-xs">
                 <span className="text-xs font-mono text-[#8b949e] uppercase">Average Peer Rating</span>
                 <p className="text-base font-semibold text-amber-300 mt-1">
-                  ★ {profile.experience.averageRating} / 5.0
+                  ★ {profile?.experience.averageRating} / 5.0
                 </p>
                 <span className="text-xs text-[#bdbdbd] font-mono">
-                  From {profile.experience.totalInterviewsConducted} debriefs
+                  From {profile?.experience.totalInterviewsConducted} debriefs
                 </span>
               </div>
 
               <div className="p-4 rounded-[10px] bg-[#111111] border border-[#3d3a39] shadow-xs">
                 <span className="text-xs font-mono text-[#8b949e] uppercase">Certifications</span>
                 <div className="space-y-1 mt-1">
-                  {profile.experience.certifications.map((cert) => (
+                  {profile?.experience.certifications.map((cert) => (
                     <p key={cert} className="text-xs text-[#00d992] font-mono">
                       ✓ {cert}
                     </p>

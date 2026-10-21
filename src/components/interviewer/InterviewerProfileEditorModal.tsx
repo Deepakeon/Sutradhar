@@ -14,19 +14,19 @@ export function InterviewerProfileEditorModal({
   initialSection = 'context'
 }: InterviewerProfileEditorModalProps) {
   const { currentUser, updateInterviewerProfile, showToast } = useApp();
-  const profile = currentUser.interviewerProfile;
+  const profile = currentUser?.interviewerProfile;
 
   const [activeSection, setActiveSection] = useState<'context' | 'skill' | 'credentials'>(initialSection);
 
   // Context Form State
-  const [headline, setHeadline] = useState(profile.headline);
-  const [interviewPhilosophy, setInterviewPhilosophy] = useState(profile.context.interviewPhilosophy);
-  const [sessionFormatsText, setSessionFormatsText] = useState(profile.context.sessionFormats.join('; '));
-  const [availabilitySchedule, setAvailabilitySchedule] = useState(profile.context.availabilitySchedule);
-  const [preferredTimezone, setPreferredTimezone] = useState(profile.context.preferredTimezone);
-  const [maxSessionsPerWeek, setMaxSessionsPerWeek] = useState(profile.context.maxSessionsPerWeek);
-  const [domainsText, setDomainsText] = useState(profile.domains.join(', '));
-  const [honorarium, setHonorarium] = useState(profile.context.hourlyHonorarium || 'Free Barter / Community Credits');
+  const [headline, setHeadline] = useState(profile?.headline);
+  const [interviewPhilosophy, setInterviewPhilosophy] = useState(profile?.context.interviewPhilosophy);
+  const [sessionFormatsText, setSessionFormatsText] = useState(profile?.context.sessionFormats.join('; '));
+  const [availabilitySchedule, setAvailabilitySchedule] = useState(profile?.context.availabilitySchedule);
+  const [preferredTimezone, setPreferredTimezone] = useState(profile?.context.preferredTimezone);
+  const [maxSessionsPerWeek, setMaxSessionsPerWeek] = useState(profile?.context.maxSessionsPerWeek);
+  const [domainsText, setDomainsText] = useState(profile?.domains.join(', '));
+  const [honorarium, setHonorarium] = useState(profile?.context.hourlyHonorarium || 'Free Barter / Community Credits');
 
   // Skill Form State
   const [skillName, setSkillName] = useState('');
@@ -35,22 +35,22 @@ export function InterviewerProfileEditorModal({
   const [interviewsConducted, setInterviewsConducted] = useState(25);
 
   // Credentials & Experience State
-  const [primaryCompany, setPrimaryCompany] = useState(profile.experience.primaryCompany);
-  const [yearsInterviewing, setYearsInterviewing] = useState(profile.experience.yearsInterviewing);
-  const [certificationsText, setCertificationsText] = useState(profile.experience.certifications.join(', '));
-  const [totalInterviewsConducted, setTotalInterviewsConducted] = useState(profile.experience.totalInterviewsConducted);
+  const [primaryCompany, setPrimaryCompany] = useState(profile?.experience.primaryCompany);
+  const [yearsInterviewing, setYearsInterviewing] = useState(profile?.experience.yearsInterviewing);
+  const [certificationsText, setCertificationsText] = useState(profile?.experience.certifications.join(', '));
+  const [totalInterviewsConducted, setTotalInterviewsConducted] = useState(profile?.experience.totalInterviewsConducted);
 
   const handleSaveContext = (e: React.FormEvent) => {
     e.preventDefault();
     updateInterviewerProfile({
       headline,
-      domains: domainsText.split(',').map((d) => d.trim()).filter(Boolean),
+      domains: domainsText?.split(',')?.map((d) => d?.trim()).filter(Boolean),
       context: {
-        ...profile.context,
-        interviewPhilosophy,
-        sessionFormats: sessionFormatsText.split(';').map((s) => s.trim()).filter(Boolean),
-        availabilitySchedule,
-        preferredTimezone,
+        ...profile?.context,
+        interviewPhilosophy: interviewPhilosophy ?? "",
+        sessionFormats: sessionFormatsText?.split(';')?.map((s) => s?.trim()).filter(Boolean) ?? [],
+        availabilitySchedule: availabilitySchedule ?? "",
+        preferredTimezone: preferredTimezone ?? "",
         maxSessionsPerWeek: Number(maxSessionsPerWeek),
         hourlyHonorarium: honorarium
       }
@@ -69,7 +69,7 @@ export function InterviewerProfileEditorModal({
       interviewsConducted: Number(interviewsConducted)
     };
     updateInterviewerProfile({
-      skills: [...profile.skills, newSkill]
+      skills: [...(profile?.skills ?? []), newSkill]
     });
     setSkillName('');
     showToast('Assessment capability added to portfolio', 'success');
@@ -77,7 +77,7 @@ export function InterviewerProfileEditorModal({
 
   const handleRemoveSkill = (skillId: string) => {
     updateInterviewerProfile({
-      skills: profile.skills.filter((s) => s.id !== skillId)
+      skills: profile?.skills.filter((s) => s.id !== skillId)
     });
     showToast('Assessment capability removed', 'info');
   };
@@ -86,11 +86,11 @@ export function InterviewerProfileEditorModal({
     e.preventDefault();
     updateInterviewerProfile({
       experience: {
-        ...profile.experience,
-        primaryCompany,
+        ...(profile?.experience ?? {} as InterviewerProfile["experience"]),
+        primaryCompany: primaryCompany ?? "",
         yearsInterviewing: Number(yearsInterviewing),
         totalInterviewsConducted: Number(totalInterviewsConducted),
-        certifications: certificationsText.split(',').map((c) => c.trim()).filter(Boolean)
+        certifications: certificationsText?.split(',')?.map((c) => c?.trim()).filter(Boolean) ?? []
       }
     });
     onClose();
@@ -139,7 +139,7 @@ export function InterviewerProfileEditorModal({
                 : 'text-[#bdbdbd] hover:text-[#f2f2f2] hover:bg-[#1a1a1a]'
             }`}
           >
-            Assessment Capabilities ({profile.skills.length})
+            Assessment Capabilities ({profile?.skills.length})
           </button>
           <button
             type="button"
@@ -270,10 +270,10 @@ export function InterviewerProfileEditorModal({
               {/* Existing Skills List */}
               <div className="space-y-3">
                 <span className="text-xs font-mono uppercase text-[#8b949e]">
-                  Active Evaluation Capabilities ({profile.skills.length})
+                  Active Evaluation Capabilities ({profile?.skills.length})
                 </span>
                 <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                  {profile.skills.map((skill) => (
+                  {profile?.skills.map((skill) => (
                     <div
                       key={skill.id}
                       className="p-3 rounded-[6px] bg-[#1a1a1a] border border-[#3d3a39] flex items-center justify-between"

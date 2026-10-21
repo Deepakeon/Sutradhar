@@ -14,18 +14,18 @@ export function CandidateProfileEditorModal({
   initialSection = 'context'
 }: CandidateProfileEditorModalProps) {
   const { currentUser, updateCandidateProfile } = useApp();
-  const profile = currentUser.candidateProfile;
+  const profile = currentUser?.candidateProfile;
 
   const [activeSection, setActiveSection] = useState<'context' | 'skill' | 'experience'>(initialSection);
 
   // Context Form State
-  const [headline, setHeadline] = useState(profile.headline);
-  const [careerObjectives, setCareerObjectives] = useState(profile.context.careerObjectives);
-  const [targetRolesText, setTargetRolesText] = useState(profile.targetRoles.join(', '));
-  const [targetCompaniesText, setTargetCompaniesText] = useState(profile.context.targetCompanies.join(', '));
-  const [preferredTimezone, setPreferredTimezone] = useState(profile.context.preferredTimezone);
-  const [weeklyAvailabilityHours, setWeeklyAvailabilityHours] = useState(profile.context.weeklyAvailabilityHours);
-  const [interviewFocusText, setInterviewFocusText] = useState(profile.context.interviewFocus.join(', '));
+  const [headline, setHeadline] = useState(profile?.headline);
+  const [careerObjectives, setCareerObjectives] = useState(profile?.context.careerObjectives);
+  const [targetRolesText, setTargetRolesText] = useState(profile?.targetRoles.join(', '));
+  const [targetCompaniesText, setTargetCompaniesText] = useState(profile?.context.targetCompanies.join(', '));
+  const [preferredTimezone, setPreferredTimezone] = useState(profile?.context.preferredTimezone);
+  const [weeklyAvailabilityHours, setWeeklyAvailabilityHours] = useState(profile?.context.weeklyAvailabilityHours);
+  const [interviewFocusText, setInterviewFocusText] = useState(profile?.context.interviewFocus.join(', '));
 
   // Add Skill Form State
   const [skillName, setSkillName] = useState('');
@@ -43,14 +43,14 @@ export function CandidateProfileEditorModal({
     e.preventDefault();
     updateCandidateProfile({
       headline,
-      targetRoles: targetRolesText.split(',').map((s) => s.trim()).filter(Boolean),
+      targetRoles: targetRolesText?.split(',')?.map((s) => s?.trim()).filter(Boolean),
       context: {
-        ...profile.context,
-        careerObjectives,
-        targetCompanies: targetCompaniesText.split(',').map((s) => s.trim()).filter(Boolean),
-        preferredTimezone,
+        ...profile?.context,
+        careerObjectives: careerObjectives ?? "",
+        targetCompanies: targetCompaniesText?.split(',')?.map((s) => s?.trim()).filter(Boolean) ?? [],
+        preferredTimezone: preferredTimezone ?? "",
         weeklyAvailabilityHours: Number(weeklyAvailabilityHours),
-        interviewFocus: interviewFocusText.split(',').map((s) => s.trim()).filter(Boolean)
+        interviewFocus: interviewFocusText?.split(',')?.map((s) => s?.trim()).filter(Boolean) ?? []
       }
     });
     onClose();
@@ -67,7 +67,7 @@ export function CandidateProfileEditorModal({
       yearsOfExperience: Number(skillYears)
     };
     updateCandidateProfile({
-      skills: [...profile.skills, newSkill]
+      skills: [...(profile?.skills ?? []), newSkill]
     });
     onClose();
   };
@@ -83,7 +83,7 @@ export function CandidateProfileEditorModal({
       highlights: expHighlights.split('\n').map((h) => h.trim()).filter(Boolean)
     };
     updateCandidateProfile({
-      experience: [newExp, ...profile.experience]
+      experience: [newExp, ...(profile?.experience ?? [])]
     });
     onClose();
   };

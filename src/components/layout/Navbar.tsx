@@ -21,11 +21,11 @@ export function Navbar() {
   }, []);
 
   const pendingInterviewerRequests = sessions.filter(
-    (s) => s.interviewerId === currentUser.id && s.status === 'pending'
+    (s) => s.interviewerId === currentUser?.id && s.status === 'pending'
   ).length;
 
   const upcomingCandidateMeetings = sessions.filter(
-    (s) => s.candidateId === currentUser.id && (s.status === 'accepted' || s.status === 'pending')
+    (s) => s.candidateId === currentUser?.id && (s.status === 'accepted' || s.status === 'pending')
   ).length;
 
   const handleRoleSelect = (role: UserRole) => {
@@ -231,7 +231,7 @@ export function Navbar() {
                   </button>
 
                   <div className="mt-2 pt-2 border-t border-[#3d3a39]/70 px-2 flex items-center justify-between text-[11px] text-[#8b949e]">
-                    <span className="truncate max-w-[180px]">Account: {currentUser.email}</span>
+                    <span className="truncate max-w-[180px]">Account: {currentUser?.email}</span>
                     <form action="/auth/signout" method="POST">
                       <button
                         type="submit"
@@ -249,13 +249,13 @@ export function Navbar() {
             <div className="hidden sm:flex items-center gap-2.5 pl-2 border-l border-[#3d3a39]">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={currentUser.avatar}
-                alt={currentUser.name}
+                src={currentUser?.avatar}
+                alt={currentUser?.name}
                 className="w-8 h-8 rounded-full border border-[#3d3a39] object-cover"
               />
               <div className="flex flex-col">
                 <span className="text-xs font-semibold text-[#f2f2f2] leading-tight">
-                  {currentUser.name}
+                  {currentUser?.name}
                 </span>
                 <span className="text-[10px] font-mono text-[#8b949e]">
                   {activeRole === 'candidate' ? 'Staff Candidate' : 'Bar Raiser'}

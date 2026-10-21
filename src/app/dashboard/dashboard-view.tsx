@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { CandidateDashboard } from '@/components/candidate/CandidateDashboard';
 import { InterviewerDashboard } from '@/components/interviewer/InterviewerDashboard';
@@ -17,20 +16,8 @@ interface DashboardViewProps {
 }
 
 export function DashboardView({ user, profile }: DashboardViewProps) {
-  const { activeRole, currentUser, updateCandidateProfile } = useApp();
+  const { activeRole } = useApp();
 
-  // Optionally sync Supabase profile info to AppContext state if available
-  useEffect(() => {
-    if (user.email && currentUser.email !== user.email) {
-      currentUser.email = user.email;
-      if (profile?.full_name) {
-        currentUser.name = profile.full_name;
-      }
-      if (profile?.avatar_url) {
-        currentUser.avatar = profile.avatar_url;
-      }
-    }
-  }, [user, profile, currentUser]);
 
   return (
     <div className="min-h-screen bg-[#101010] text-[#f2f2f2] flex flex-col justify-between selection:bg-[#00d992]/20 selection:text-[#00d992]">
@@ -56,7 +43,7 @@ export function DashboardView({ user, profile }: DashboardViewProps) {
             <span>•</span>
             <span className="font-mono">Single Account Dual-Role Engine</span>
             <span>•</span>
-            <span className="text-[#bdbdbd]">{profile?.email || user.email || currentUser.email}</span>
+            <span className="text-[#bdbdbd]">{profile?.email || user.email}</span>
           </div>
 
           <div className="flex items-center gap-6">
