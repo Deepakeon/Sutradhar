@@ -11,6 +11,12 @@ import {
   MatchingCandidate,
   InterviewQuestionnaire
 } from '@/types';
+import {
+  INITIAL_USER_ACCOUNT,
+  MATCHING_INTERVIEWERS,
+  MATCHING_CANDIDATES,
+  INITIAL_SESSIONS
+} from '@/lib/mockData';
 
 interface ToastInfo {
   id: string;
@@ -19,7 +25,7 @@ interface ToastInfo {
 }
 
 interface AppContextType {
-  currentUser: UserAccount | null;
+  currentUser: UserAccount;
   activeRole: UserRole;
   setActiveRole: (role: UserRole) => void;
   updateCandidateProfile: (profile: Partial<CandidateProfile>) => void;
@@ -51,10 +57,10 @@ const STORAGE_KEY_USER = 'sutradhar_user_account_v1';
 const STORAGE_KEY_SESSIONS = 'sutradhar_sessions_v1';
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [currentUser, setCurrentUser] = useState<UserAccount | null>(null);
-  const [sessions, setSessions] = useState<InterviewSession[]>([]);
-  const [matchingInterviewers] = useState<MatchingInterviewer[]>([]);
-  const [matchingCandidates] = useState<MatchingCandidate[]>([]);
+  const [currentUser, setCurrentUser] = useState<UserAccount>(INITIAL_USER_ACCOUNT);
+  const [sessions, setSessions] = useState<InterviewSession[]>(INITIAL_SESSIONS);
+  const [matchingInterviewers] = useState<MatchingInterviewer[]>(MATCHING_INTERVIEWERS);
+  const [matchingCandidates] = useState<MatchingCandidate[]>(MATCHING_CANDIDATES);
   const [activeTab, setActiveTab] = useState<string>('overview');
   const [toasts, setToasts] = useState<ToastInfo[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
@@ -115,7 +121,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const setActiveRole = (role: UserRole) => {
     setCurrentUser((prev) => ({
-      ...(prev || {} as UserAccount),
+      ...prev,
       activeRole: role
     }));
     setActiveTab('overview');
@@ -127,9 +133,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const updateCandidateProfile = (updatedFields: Partial<CandidateProfile>) => {
     setCurrentUser((prev) => ({
-      ...(prev || {} as UserAccount),
+      ...prev,
       candidateProfile: {
-        ...(prev?.candidateProfile || {} as CandidateProfile),
+        ...prev.candidateProfile,
         ...updatedFields
       }
     }));
@@ -138,9 +144,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const updateInterviewerProfile = (updatedFields: Partial<InterviewerProfile>) => {
     setCurrentUser((prev) => ({
-      ...(prev || {} as UserAccount),
+      ...prev,
       interviewerProfile: {
-        ...(prev?.interviewerProfile || {}as InterviewerProfile ),
+        ...prev.interviewerProfile,
         ...updatedFields
       }
     }));
@@ -156,14 +162,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     date: string,
     notes: string
   ) => {
-    const isCandidate = currentUser?.activeRole === 'candidate';
+    const isCandidate = currentUser.activeRole === 'candidate';
     const newSession: InterviewSession = isCandidate
       ? {
           id: `ses_${Date.now()}`,
-          candidateId: currentUser?.id || "",
-          candidateName: currentUser?.name || "",
-          candidateAvatar: currentUser?.avatar || "",
-          candidateRole: currentUser?.candidateProfile?.headline || "",
+          candidateId: currentUser.id,
+          candidateName: currentUser.name,
+          candidateAvatar: currentUser.avatar,
+          candidateRole: currentUser.candidateProfile.headline,
           interviewerId: targetId,
           interviewerName: targetName,
           interviewerAvatar: targetAvatar,
@@ -180,10 +186,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           candidateName: targetName,
           candidateAvatar: targetAvatar,
           candidateRole: targetCompanyOrRole,
-          interviewerId: currentUser?.id || "",
-          interviewerName: currentUser?.name || "",
-          interviewerAvatar: currentUser?.avatar || "",
-          interviewerCompany: currentUser?.interviewerProfile.experience.primaryCompany || "",
+          interviewerId: currentUser.id,
+          interviewerName: currentUser.name,
+          interviewerAvatar: currentUser.avatar,
+          interviewerCompany: currentUser.interviewerProfile.experience.primaryCompany,
           format,
           scheduledAt: date,
           status: 'pending',
@@ -232,7 +238,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider
       value={{
         currentUser,
-        activeRole: currentUser?.activeRole ?? "candidate",
+        activeRole: currentUser.activeRole,
         setActiveRole,
         updateCandidateProfile,
         updateInterviewerProfile,

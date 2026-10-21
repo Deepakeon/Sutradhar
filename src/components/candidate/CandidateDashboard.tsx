@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
 import { MatchingInterviewer, InterviewSession } from '@/types';
 import { RequestInterviewModal } from './RequestInterviewModal';
@@ -19,7 +19,7 @@ export function CandidateDashboard() {
     showToast
   } = useApp();
 
-  const profile = currentUser?.candidateProfile;
+  const profile = currentUser.candidateProfile;
 
   // Modals state
   const [selectedInterviewer, setSelectedInterviewer] = useState<MatchingInterviewer | null>(null);
@@ -35,7 +35,7 @@ export function CandidateDashboard() {
   const [sessionsFilter, setSessionsFilter] = useState<'all' | 'accepted' | 'pending' | 'completed'>('all');
 
   // Candidate sessions
-  const candidateSessions = sessions.filter((s) => s.candidateId === currentUser?.id);
+  const candidateSessions = sessions.filter((s) => s.candidateId === currentUser.id);
 
   const upcomingAcceptedSession = candidateSessions.find((s) => s.status === 'accepted');
 
@@ -67,7 +67,7 @@ export function CandidateDashboard() {
 
   const handleDeleteSkill = (skillId: string) => {
     updateCandidateProfile({
-      skills: profile?.skills?.filter((s) => s.id !== skillId)
+      skills: profile.skills.filter((s) => s.id !== skillId)
     });
     showToast('Skill removed from candidate profile', 'info');
   };
@@ -86,14 +86,14 @@ export function CandidateDashboard() {
                     CANDIDATE MODE
                   </span>
                   <span className="text-xs text-[#8b949e] font-mono">
-                    Account: {currentUser?.name}
+                    Account: {currentUser.name}
                   </span>
                 </div>
                 <h1 className="text-2xl sm:text-3xl font-normal text-[#ffffff] tracking-tight">
                   Prepare for Staff & Principal Calibrations
                 </h1>
                 <p className="text-sm sm:text-base text-[#bdbdbd] max-w-2xl leading-relaxed">
-                  {profile?.headline}
+                  {profile.headline}
                 </p>
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
@@ -155,10 +155,10 @@ export function CandidateDashboard() {
                   Verified Skills
                 </span>
                 <div className="text-2xl font-bold text-[#f2f2f2] mt-1">
-                  {profile?.skills.length}
+                  {profile.skills.length}
                 </div>
                 <span className="text-[10px] text-[#00d992] font-mono">
-                  {profile?.skills.filter((s) => s.proficiency === 'Expert').length} Expert levels
+                  {profile.skills.filter((s) => s.proficiency === 'Expert').length} Expert levels
                 </span>
               </div>
             </div>
@@ -291,7 +291,7 @@ export function CandidateDashboard() {
               <div>
                 <span className="text-[11px] font-mono text-[#8b949e] uppercase">Target Roles</span>
                 <div className="flex flex-wrap gap-1.5 mt-1">
-                  {profile?.targetRoles.map((role) => (
+                  {profile.targetRoles.map((role) => (
                     <span key={role} className="inline-flex items-center gap-1.5 rounded-full border border-[#3d3a39] bg-[#101010] px-2.5 py-0.5 text-xs text-[#f2f2f2]">
                       {role}
                     </span>
@@ -302,7 +302,7 @@ export function CandidateDashboard() {
               <div>
                 <span className="text-[11px] font-mono text-[#8b949e] uppercase">Target Companies</span>
                 <div className="flex flex-wrap gap-1.5 mt-1">
-                  {profile?.context.targetCompanies.map((c) => (
+                  {profile.context.targetCompanies.map((c) => (
                     <span key={c} className="inline-flex items-center gap-1.5 rounded-full border border-[#00d992]/40 bg-[#00d992]/10 px-2.5 py-0.5 text-xs font-medium text-[#00d992]">
                       {c}
                     </span>
@@ -313,14 +313,14 @@ export function CandidateDashboard() {
               <div>
                 <span className="text-[11px] font-mono text-[#8b949e] uppercase">Timezone & Bandwidth</span>
                 <p className="text-xs text-[#bdbdbd] mt-1 font-mono">
-                  {profile?.context.preferredTimezone} • {profile?.context.weeklyAvailabilityHours} hrs/wk practice
+                  {profile.context.preferredTimezone} • {profile.context.weeklyAvailabilityHours} hrs/wk practice
                 </p>
               </div>
 
               <div>
                 <span className="text-[11px] font-mono text-[#8b949e] uppercase">Focus Areas</span>
                 <div className="flex flex-wrap gap-1.5 mt-1">
-                  {profile?.context.interviewFocus.map((f) => (
+                  {profile.context.interviewFocus.map((f) => (
                     <span key={f} className="text-[11px] font-mono text-[#bdbdbd] bg-[#101010] px-2 py-0.5 rounded-[4px] border border-[#3d3a39]">
                       {f}
                     </span>
@@ -333,7 +333,7 @@ export function CandidateDashboard() {
       )}
 
       {/* Profile Management Tab */}
-      {activeTab === 'profile?' && (
+      {activeTab === 'profile' && (
         <div className="space-y-8">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-[#3d3a39]">
             <div>
@@ -385,19 +385,19 @@ export function CandidateDashboard() {
                 <div>
                   <span className="text-xs font-mono text-[#8b949e] uppercase">Headline</span>
                   <p className="text-base text-[#f2f2f2] font-semibold mt-1">
-                    {profile?.headline}
+                    {profile.headline}
                   </p>
                 </div>
                 <div>
                   <span className="text-xs font-mono text-[#8b949e] uppercase">Career Objectives</span>
                   <p className="text-sm text-[#bdbdbd] mt-1 leading-relaxed">
-                    {profile?.context.careerObjectives}
+                    {profile.context.careerObjectives}
                   </p>
                 </div>
                 <div>
                   <span className="text-xs font-mono text-[#8b949e] uppercase">Target Roles</span>
                   <div className="flex flex-wrap gap-2 mt-1.5">
-                    {profile?.targetRoles.map((role) => (
+                    {profile.targetRoles.map((role) => (
                       <span key={role} className="inline-flex items-center gap-1.5 rounded-full border border-[#3d3a39] bg-[#101010] px-2.5 py-0.5 text-xs font-medium text-[#f2f2f2]">
                         {role}
                       </span>
@@ -410,7 +410,7 @@ export function CandidateDashboard() {
                 <div>
                   <span className="text-xs font-mono text-[#8b949e] uppercase">Target Companies</span>
                   <div className="flex flex-wrap gap-2 mt-1.5">
-                    {profile?.context.targetCompanies.map((c) => (
+                    {profile.context.targetCompanies.map((c) => (
                       <span key={c} className="inline-flex items-center gap-1.5 rounded-full border border-[#00d992]/40 bg-[#00d992]/10 px-2.5 py-0.5 text-xs font-medium text-[#00d992]">
                         {c}
                       </span>
@@ -421,20 +421,20 @@ export function CandidateDashboard() {
                   <div>
                     <span className="text-xs font-mono text-[#8b949e] uppercase">Timezone</span>
                     <p className="text-sm text-[#f2f2f2] font-mono mt-1">
-                      {profile?.context.preferredTimezone}
+                      {profile.context.preferredTimezone}
                     </p>
                   </div>
                   <div>
                     <span className="text-xs font-mono text-[#8b949e] uppercase">Weekly Availability</span>
                     <p className="text-sm text-[#f2f2f2] font-mono mt-1">
-                      {profile?.context.weeklyAvailabilityHours} hours / week
+                      {profile.context.weeklyAvailabilityHours} hours / week
                     </p>
                   </div>
                 </div>
                 <div>
                   <span className="text-xs font-mono text-[#8b949e] uppercase">Resume & Highlights Note</span>
                   <p className="text-xs text-[#bdbdbd] mt-1 font-mono bg-[#101010] p-3 rounded-[6px] border border-[#3d3a39]">
-                    {profile?.context.resumeNotes || 'No resume notes attached'}
+                    {profile.context.resumeNotes || 'No resume notes attached'}
                   </p>
                 </div>
               </div>
@@ -446,7 +446,7 @@ export function CandidateDashboard() {
             <div className="flex items-center justify-between pb-3 border-b border-[#3d3a39]">
               <div>
                 <span className="text-xs font-mono uppercase tracking-[2.52px] text-[#8b949e]">
-                  02 • TECHNICAL SKILLS & PROFICIENCY ({profile?.skills.length})
+                  02 • TECHNICAL SKILLS & PROFICIENCY ({profile.skills.length})
                 </span>
               </div>
               <button
@@ -458,7 +458,7 @@ export function CandidateDashboard() {
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {profile?.skills.map((skill) => (
+              {profile.skills.map((skill) => (
                 <div
                   key={skill.id}
                   className="p-3.5 rounded-[6px] bg-[#101010] border border-[#3d3a39] flex items-center justify-between group hover:border-[#00d992]/50 transition-colors"
@@ -493,7 +493,7 @@ export function CandidateDashboard() {
           <div className="rounded-[8px] bg-[#1a1a1a] border border-[#3d3a39] p-6 space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#3d3a39]">
               <span className="text-xs font-mono uppercase tracking-[2.52px] text-[#8b949e]">
-                03 • ENGINEERING EXPERIENCE ({profile?.experience.length})
+                03 • ENGINEERING EXPERIENCE ({profile.experience.length})
               </span>
               <button
                 onClick={() => handleOpenEditor('experience')}
@@ -504,7 +504,7 @@ export function CandidateDashboard() {
             </div>
 
             <div className="space-y-4">
-              {profile?.experience.map((exp) => (
+              {profile.experience.map((exp) => (
                 <div
                   key={exp.id}
                   className="p-4 rounded-[6px] bg-[#101010] border border-[#3d3a39] space-y-2"
@@ -546,7 +546,7 @@ export function CandidateDashboard() {
                 Ranked Interviewers
               </h2>
               <p className="text-sm text-[#8b949e]">
-                Interview bar raisers matched dynamically against your technical domains and candidate profile?.
+                Interview bar raisers matched dynamically against your technical domains and candidate profile.
               </p>
             </div>
             <div className="flex items-center gap-2 text-xs font-mono text-[#00d992]">
