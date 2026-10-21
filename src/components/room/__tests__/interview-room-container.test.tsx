@@ -272,9 +272,14 @@ describe('Room Container Seam (/room/[id])', () => {
       error: null,
     });
 
+    const mockUpdate = vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+    });
+
     mockFrom.mockReturnValue({
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
+      update: mockUpdate,
       single: vi.fn().mockResolvedValue({
         data: {
           id: 'session-123',
@@ -286,17 +291,6 @@ describe('Room Container Seam (/room/[id])', () => {
       }),
     });
 
-    // Mock fetch for finalization
-    global.fetch = vi.fn().mockResolvedValue({
-      ok: true,
-      json: vi.fn().mockResolvedValue({
-        success: true,
-        masterRecordingUrl: 'https://res.cloudinary.com/demo/video/upload/master.webm',
-        totalChunks: 2,
-        durationSeconds: 60,
-      }),
-    }) as unknown as typeof fetch;
-
     render(<InterviewRoomContainer interviewId="session-123" />);
 
     await waitFor(() => {
@@ -307,10 +301,7 @@ describe('Room Container Seam (/room/[id])', () => {
 
     await waitFor(() => {
       expect(screen.getByText('Interview Session Concluded')).toBeInTheDocument();
-      expect(
-        screen.getByText(/All audio chunks were securely streamed to Cloudinary/i)
-      ).toBeInTheDocument();
-      expect(screen.getByText('Listen to Recording ↗')).toBeInTheDocument();
+      expect(screen.getByText('Completed')).toBeInTheDocument();
     });
   });
 });
