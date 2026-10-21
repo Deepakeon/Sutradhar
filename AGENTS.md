@@ -14,6 +14,10 @@ Default vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 
 Single-context (`CONTEXT.md` + `docs/adr/`). See `docs/agents/domain.md`.
 
+## Database Schema Architecture
+
+All Postgres tables in this application must be created in the `private` schema (e.g. `private.profiles`, `private.interviews`, `private.interview_chunks`), NOT `public`.
+
 ## Design System
 
 All frontend/UI work must follow `DESIGN.md`. Consult it for color tokens, typography scale, component geometry, and spacing before writing or styling UI.
