@@ -35,6 +35,7 @@ vi.mock('@/lib/audio/indexed-db-queue', () => ({
   bufferChunk: vi.fn().mockResolvedValue(undefined),
   getBufferedChunks: vi.fn().mockResolvedValue([]),
   clearBufferedChunk: vi.fn().mockResolvedValue(undefined),
+  clearAllInterviewChunks: vi.fn().mockResolvedValue(undefined),
 }));
 
 // Setup WebRTC and Media Devices mocks

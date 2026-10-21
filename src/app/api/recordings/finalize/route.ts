@@ -44,20 +44,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: chunksError.message }, { status: 500 });
     }
 
-    const totalChunks = chunks?.length || 0;
-    const durationSeconds = chunks?.reduce((sum, c) => sum + (Number(c.duration_seconds) || 30), 0) || 0;
+    // Filter valid chunks with public ID and URL
+    const validChunks = (chunks || []).filter(
+      (c) => Boolean(c.cloudinary_public_id && c.cloudinary_url)
+    );
+
+    const totalChunks = validChunks.length;
+    const durationSeconds = validChunks.reduce((sum, c) => sum + (Number(c.duration_seconds) || 30), 0);
 
     let masterRecordingUrl: string | null = null;
     const cloudName = process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME || 'demo';
 
-    if (chunks && chunks.length > 0) {
-      if (chunks.length === 1) {
-        masterRecordingUrl = chunks[0].cloudinary_url;
+    if (validChunks.length > 0) {
+      if (validChunks.length === 1) {
+        masterRecordingUrl = validChunks[0].cloudinary_url;
       } else {
         // Build Cloudinary spliced audio concatenation URL using fl_splice transformation
         // Base is first chunk, subsequently spliced with each additional chunk
-        const basePublicId = chunks[0].cloudinary_public_id.replace(/\.[^/.]+$/, '');
-        const spliceLayers = chunks
+        const basePublicId = validChunks[0].cloudinary_public_id.replace(/\.[^/.]+$/, '');
+        const spliceLayers = validChunks
           .slice(1)
           .map((c) => {
             const cleanLayerId = c.cloudinary_public_id.replace(/\.[^/.]+$/, '').replace(/\//g, ':');

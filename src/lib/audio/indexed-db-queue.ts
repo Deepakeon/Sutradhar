@@ -75,3 +75,17 @@ export async function clearBufferedChunk(interviewId: string, chunkIndex: number
     req.onerror = () => reject(req.error);
   });
 }
+
+export async function clearAllInterviewChunks(interviewId: string): Promise<void> {
+  const db = await openDB();
+  if (!db) return;
+
+  const chunks = await getBufferedChunks(interviewId);
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, 'readwrite');
+    const store = tx.objectStore(STORE_NAME);
+    chunks.forEach((c) => store.delete([c.interviewId, c.chunkIndex]));
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}

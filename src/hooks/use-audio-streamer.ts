@@ -1,8 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { bufferChunk, clearBufferedChunk, getBufferedChunks } from '@/lib/audio/indexed-db-queue';
+import {
+  bufferChunk,
+  clearBufferedChunk,
+  getBufferedChunks,
+  clearAllInterviewChunks,
+} from '@/lib/audio/indexed-db-queue';
 
 interface UseAudioStreamerOptions {
   interviewId: string;
@@ -39,8 +44,11 @@ export function useAudioStreamer({
   const isRunningRef = useRef(false);
   const chunkIndexRef = useRef(0);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const localSourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const remoteSourceNodeRef = useRef<MediaStreamAudioSourceNode | null>(null);
+  const dummyAudioRef = useRef<HTMLAudioElement | null>(null);
 
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   // Upload single chunk to Cloudinary
   const uploadChunkToCloudinary = useCallback(
@@ -77,24 +85,32 @@ export function useAudioStreamer({
         });
 
         if (!uploadRes.ok) {
-          throw new Error(`Cloudinary upload failed: ${uploadRes.statusText}`);
+          const errorJson = await uploadRes.json().catch(() => null);
+          const detailedMsg = errorJson?.error?.message || uploadRes.statusText;
+          if (uploadRes.status === 400) {
+            await clearBufferedChunk(interviewId, index);
+          }
+          throw new Error(`Cloudinary upload failed: ${detailedMsg}`);
         }
 
         const uploadData = await uploadRes.json();
         const cloudinaryUrl = uploadData.secure_url || uploadData.url;
         const cloudinaryPublicId = uploadData.public_id;
 
-        // 3. Record chunk in private.interview_chunks
+        // 3. Record chunk in private.interview_chunks (upsert with ignoreDuplicates to prevent 409 collisions)
         await supabase
           .schema('private')
           .from('interview_chunks')
-          .insert({
-            interview_id: interviewId,
-            chunk_index: index,
-            cloudinary_public_id: cloudinaryPublicId,
-            cloudinary_url: cloudinaryUrl,
-            duration_seconds: 30,
-          });
+          .upsert(
+            {
+              interview_id: interviewId,
+              chunk_index: index,
+              cloudinary_public_id: cloudinaryPublicId,
+              cloudinary_url: cloudinaryUrl,
+              duration_seconds: 30,
+            },
+            { onConflict: 'interview_id,chunk_index', ignoreDuplicates: true }
+          );
 
         // 4. Clear from local IndexedDB
         await clearBufferedChunk(interviewId, index);
@@ -114,10 +130,10 @@ export function useAudioStreamer({
   // Process produced chunk
   const handleChunkProduced = useCallback(
     async (index: number, blob: Blob) => {
-      // Buffer in IndexedDB first
+      // 1. Both interviewer and candidate buffer locally in IndexedDB
       await bufferChunk(interviewId, index, blob);
 
-      // Primary uploader is the interviewer; candidate buffers for failover
+      // 2. Only interviewer actively uploads during live call (candidate is passive backup)
       if (role === 'interviewer') {
         await uploadChunkToCloudinary(index, blob);
       }
@@ -127,7 +143,8 @@ export function useAudioStreamer({
 
   // Setup Web Audio Mixing & Rolling Recording
   useEffect(() => {
-    if (!isCallActive || !localStream) {
+    // Both interviewer and candidate run the audio recorder (candidate acts as passive backup)
+    if (!isCallActive) {
       if (isRunningRef.current) {
         isRunningRef.current = false;
         if (activeRecorderRef.current && activeRecorderRef.current.state === 'recording') {
@@ -145,20 +162,13 @@ export function useAudioStreamer({
       const ctx = new AudioCtx();
       audioContextRef.current = ctx;
 
+      // Ensure AudioContext is actively running (Chrome defaults to suspended)
+      if (ctx.state === 'suspended') {
+        ctx.resume().catch(() => {});
+      }
+
       const destination = ctx.createMediaStreamDestination();
       destinationRef.current = destination;
-
-      // Connect local audio
-      if (localStream.getAudioTracks().length > 0) {
-        const localSource = ctx.createMediaStreamSource(localStream);
-        localSource.connect(destination);
-      }
-
-      // Connect remote audio if available
-      if (remoteStream && remoteStream.getAudioTracks().length > 0) {
-        const remoteSource = ctx.createMediaStreamSource(remoteStream);
-        remoteSource.connect(destination);
-      }
 
       isRunningRef.current = true;
       setTimeout(() => setIsRecording(true), 0);
@@ -181,8 +191,10 @@ export function useAudioStreamer({
           recorder.onstop = async () => {
             if (chunks.length > 0) {
               const fullBlob = new Blob(chunks, { type: mimeType });
-              const currentIdx = chunkIndexRef.current++;
-              await handleChunkProduced(currentIdx, fullBlob);
+              // Guard against empty / stub headers (<1KB) when stopped prematurely
+                const currentIdx = chunkIndexRef.current++;
+                await handleChunkProduced(currentIdx, fullBlob);
+              
             }
             if (isRunningRef.current) {
               recordNextSlice();
@@ -220,23 +232,152 @@ export function useAudioStreamer({
       if (activeRecorderRef.current && activeRecorderRef.current.state === 'recording') {
         activeRecorderRef.current.stop();
       }
+      if (localSourceNodeRef.current) {
+        try { localSourceNodeRef.current.disconnect(); } catch {}
+        localSourceNodeRef.current = null;
+      }
+      if (remoteSourceNodeRef.current) {
+        try { remoteSourceNodeRef.current.disconnect(); } catch {}
+        remoteSourceNodeRef.current = null;
+      }
+      if (dummyAudioRef.current) {
+        dummyAudioRef.current.srcObject = null;
+        dummyAudioRef.current.remove();
+        dummyAudioRef.current = null;
+      }
       if (audioContextRef.current && audioContextRef.current.state !== 'closed') {
-        audioContextRef.current.close();
+        audioContextRef.current.close().catch(() => {});
       }
       setIsRecording(false);
     };
-  }, [isCallActive, localStream, remoteStream, handleChunkProduced]);
+  }, [isCallActive, role, handleChunkProduced]);
+
+  // Dynamically wire local stream into AudioContext mixer
+  useEffect(() => {
+    const ctx = audioContextRef.current;
+    const destination = destinationRef.current;
+    if (!ctx || !destination || ctx.state === 'closed') return;
+
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+
+    if (localSourceNodeRef.current) {
+      try { localSourceNodeRef.current.disconnect(); } catch {}
+      localSourceNodeRef.current = null;
+    }
+
+    if (localStream && localStream.getAudioTracks().length > 0) {
+      try {
+        const source = ctx.createMediaStreamSource(localStream);
+        source.connect(destination);
+        localSourceNodeRef.current = source;
+      } catch (err) {
+        console.warn('Failed to connect local audio track to mixer:', err);
+      }
+    }
+  }, [localStream]);
+
+  // Dynamically wire remote stream into AudioContext mixer (with Chromium wake-up fix)
+  useEffect(() => {
+    const ctx = audioContextRef.current;
+    const destination = destinationRef.current;
+    if (!ctx || !destination || ctx.state === 'closed') return;
+
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+
+    if (remoteSourceNodeRef.current) {
+      try { remoteSourceNodeRef.current.disconnect(); } catch {}
+      remoteSourceNodeRef.current = null;
+    }
+
+    if (remoteStream && remoteStream.getAudioTracks().length > 0) {
+      try {
+        // Chromium WebRTC fix: wake up media engine with hidden audio element
+        if (!dummyAudioRef.current && typeof document !== 'undefined') {
+          const el = document.createElement('audio');
+          el.muted = true;
+          el.setAttribute('playsinline', 'true');
+          el.style.display = 'none';
+          document.body.appendChild(el);
+          dummyAudioRef.current = el;
+        }
+        if (dummyAudioRef.current) {
+          dummyAudioRef.current.srcObject = remoteStream;
+          dummyAudioRef.current.play().catch(() => {});
+        }
+
+        const source = ctx.createMediaStreamSource(remoteStream);
+        source.connect(destination);
+        remoteSourceNodeRef.current = source;
+      } catch (err) {
+        console.warn('Failed to connect remote audio track to mixer:', err);
+      }
+    }
+  }, [remoteStream]);
 
   // Finalize full interview audio session
   const finalizeRecording = useCallback(async (): Promise<string | null> => {
     try {
-      // Flush any pending chunks from IndexedDB if primary uploader or failover
-      const pending = await getBufferedChunks(interviewId);
-      for (const item of pending) {
-        await uploadChunkToCloudinary(item.chunkIndex, item.blob);
+      // 1. If active recorder is running, await final slice flush
+      if (activeRecorderRef.current && activeRecorderRef.current.state === 'recording') {
+        const recorder = activeRecorderRef.current;
+        await new Promise<void>((resolve) => {
+          const originalOnStop = recorder.onstop;
+          recorder.onstop = async (e) => {
+            if (originalOnStop) {
+              await (originalOnStop as (ev: Event) => Promise<void>)(e);
+            }
+            resolve();
+          };
+          recorder.stop();
+        });
       }
 
-      // Call finalize endpoint to compute Cloudinary concatenated URL
+      await new Promise((r) => setTimeout(r, 100));
+
+      // 2. Candidate failover check
+      if (role === 'candidate') {
+        const { data: interview } = await supabase
+          .schema('private')
+          .from('interviews')
+          .select('status, master_recording_url')
+          .eq('id', interviewId)
+          .single();
+
+        if (interview?.master_recording_url && interview?.status === 'completed') {
+          // Interviewer already finalized cleanly: clear local candidate backup and return master URL
+          await clearAllInterviewChunks(interviewId);
+          return interview.master_recording_url;
+        }
+
+        // Failover: Interviewer dropped or crashed before finalizing
+        // Candidate uploads missing chunks that were not yet uploaded
+        const { data: existingChunks } = await supabase
+          .schema('private')
+          .from('interview_chunks')
+          .select('chunk_index')
+          .eq('interview_id', interviewId);
+
+        const existingIndices = new Set((existingChunks || []).map((c) => c.chunk_index));
+        const pending = await getBufferedChunks(interviewId);
+
+        for (const item of pending) {
+          if (!existingIndices.has(item.chunkIndex)) {
+            await uploadChunkToCloudinary(item.chunkIndex, item.blob);
+          }
+        }
+      } else {
+        // Interviewer: Flush all pending buffered chunks
+        const pending = await getBufferedChunks(interviewId);
+        for (const item of pending) {
+          await uploadChunkToCloudinary(item.chunkIndex, item.blob);
+        }
+      }
+
+      // 3. Call finalize endpoint to compute Cloudinary concatenated URL
       const res = await fetch('/api/recordings/finalize', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -248,12 +389,13 @@ export function useAudioStreamer({
       }
 
       const data = await res.json();
+      await clearAllInterviewChunks(interviewId);
       return data.masterRecordingUrl || null;
     } catch (err: unknown) {
       console.error('Finalize recording error:', err);
       return null;
     }
-  }, [interviewId, uploadChunkToCloudinary]);
+  }, [interviewId, role, supabase, uploadChunkToCloudinary]);
 
   return {
     isRecording,

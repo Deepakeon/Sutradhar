@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { RoomParticipant, InterviewRow } from '@/types/interview';
@@ -17,7 +17,7 @@ interface InterviewRoomContainerProps {
 
 export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerProps) {
   const router = useRouter();
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -85,7 +85,8 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
     }
 
     loadSession();
-  }, [interviewId, router, supabase]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [interviewId]);
 
   // Hook 1: WebRTC Real-Time Calling
   const {

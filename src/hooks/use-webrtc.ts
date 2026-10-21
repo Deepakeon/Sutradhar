@@ -33,7 +33,50 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const channelRef = useRef<RealtimeChannel | null>(null);
   const iceCandidateQueue = useRef<RTCIceCandidateInit[]>([]);
+  const hasOfferedRef = useRef(false);
+  const currentProfileRef = useRef(currentProfile);
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const onCallEndedRef = useRef(onCallEnded);
   const supabase = createClient();
+
+  useEffect(() => {
+    currentProfileRef.current = currentProfile;
+  }, [currentProfile]);
+
+  useEffect(() => {
+    localStreamRef.current = localStream;
+  }, [localStream]);
+
+  useEffect(() => {
+    onCallEndedRef.current = onCallEnded;
+  }, [onCallEnded]);
+
+  // Helper to ensure audio is always attached before video for deterministic SDP m-line ordering
+  const attachTracksInOrder = useCallback((pc: RTCPeerConnection, stream: MediaStream) => {
+    const audioTrack = stream.getAudioTracks()[0];
+    const videoTrack = stream.getVideoTracks()[0];
+    const senders = typeof pc.getSenders === 'function' ? pc.getSenders() : [];
+
+    // 1. Audio track (always m-line 0)
+    if (audioTrack) {
+      const audioSender = senders.find((s) => s.track?.kind === 'audio');
+      if (audioSender) {
+        audioSender.replaceTrack(audioTrack);
+      } else {
+        pc.addTrack(audioTrack, stream);
+      }
+    }
+
+    // 2. Video track (always m-line 1)
+    if (videoTrack) {
+      const videoSender = senders.find((s) => s.track?.kind === 'video');
+      if (videoSender) {
+        videoSender.replaceTrack(videoTrack);
+      } else {
+        pc.addTrack(videoTrack, stream);
+      }
+    }
+  }, []);
 
   // Load available media devices
   const refreshDevices = useCallback(async () => {
@@ -91,6 +134,9 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
 
     pc.onconnectionstatechange = () => {
       setConnectionState(pc.connectionState);
+      if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
+        hasOfferedRef.current = false;
+      }
     };
 
     pc.onicecandidate = (event) => {
@@ -100,7 +146,7 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
           event: 'signal',
           payload: {
             type: 'ice-candidate',
-            senderId: currentProfile.id,
+            senderId: currentProfileRef.current.id,
             candidate: event.candidate.toJSON(),
             timestamp: Date.now(),
           } as SignalingPayload,
@@ -112,36 +158,33 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
       if (event.streams && event.streams[0]) {
         setRemoteStream(event.streams[0]);
       } else {
-        const inboundStream = new MediaStream([event.track]);
-        setRemoteStream(inboundStream);
+        setRemoteStream((prev) => {
+          if (!prev) {
+            return new MediaStream([event.track]);
+          }
+          if (!prev.getTracks().some((t) => t.id === event.track.id)) {
+            prev.addTrack(event.track);
+          }
+          return new MediaStream(prev.getTracks());
+        });
       }
     };
 
-    // Add local tracks to PC
-    if (localStream) {
-      localStream.getTracks().forEach((track) => {
-        pc.addTrack(track, localStream);
-      });
+    // Add local tracks to PC in deterministic order (audio then video)
+    if (localStreamRef.current) {
+      attachTracksInOrder(pc, localStreamRef.current);
     }
 
     return pc;
-  }, [currentProfile.id, localStream]);
+  }, [attachTracksInOrder]);
 
   // Update PC tracks if localStream changes
   useEffect(() => {
     const pc = pcRef.current;
     if (pc && localStream) {
-      const senders = pc.getSenders();
-      localStream.getTracks().forEach((track) => {
-        const sender = senders.find((s) => s.track?.kind === track.kind);
-        if (sender) {
-          sender.replaceTrack(track);
-        } else {
-          pc.addTrack(track, localStream);
-        }
-      });
+      attachTracksInOrder(pc, localStream);
     }
-  }, [localStream]);
+  }, [localStream, attachTracksInOrder]);
 
   // Signaling Setup via Supabase Realtime Channel
   useEffect(() => {
@@ -158,50 +201,38 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
     channelRef.current = channel;
 
     // Presence Tracking
-    channel.on('presence', { event: 'sync' }, async () => {
+    channel.on('presence', { event: 'sync' }, () => {
       const state = channel.presenceState();
       const participants: RoomParticipant[] = [];
 
       Object.values(state).forEach((presences) => {
         (presences as unknown as RoomParticipant[]).forEach((p) => {
-          if (p.id !== currentProfile.id) {
+          if (p.id !== currentProfileRef.current.id) {
             participants.push(p);
           }
         });
       });
 
       if (participants.length > 0) {
-        const peer = participants[0];
-        setPeerProfile(peer);
-
-        // Interviewer initiates the WebRTC offer
-        if (currentProfile.role === 'interviewer') {
-          const pc = getOrCreatePC();
-          const offer = await pc.createOffer();
-          await pc.setLocalDescription(offer);
-
-          channel.send({
-            type: 'broadcast',
-            event: 'signal',
-            payload: {
-              type: 'offer',
-              senderId: currentProfile.id,
-              recipientId: peer.id,
-              sdp: offer,
-              timestamp: Date.now(),
-            } as SignalingPayload,
-          });
-        }
+        setPeerProfile(participants[0]);
       } else {
         setPeerProfile(null);
+        hasOfferedRef.current = false;
       }
     });
 
     // Broadcast Signaling Handling
     channel.on('broadcast', { event: 'signal' }, async ({ payload }: { payload: SignalingPayload }) => {
+      if (!payload || payload.senderId === currentProfileRef.current.id) return;
+      if (payload.recipientId && payload.recipientId !== currentProfileRef.current.id) return;
+
       const pc = getOrCreatePC();
 
       if (payload.type === 'offer') {
+        if (localStreamRef.current) {
+          attachTracksInOrder(pc, localStreamRef.current);
+        }
+
         await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp!));
 
         // Process queued ICE candidates
@@ -218,13 +249,14 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
           event: 'signal',
           payload: {
             type: 'answer',
-            senderId: currentProfile.id,
+            senderId: currentProfileRef.current.id,
+            recipientId: payload.senderId,
             sdp: answer,
             timestamp: Date.now(),
           } as SignalingPayload,
         });
       } else if (payload.type === 'answer') {
-        if (pc.signalingState !== 'stable') {
+        if (pc.signalingState === 'have-local-offer') {
           await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp!));
           while (iceCandidateQueue.current.length > 0) {
             const candidate = iceCandidateQueue.current.shift();
@@ -240,7 +272,7 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
           }
         }
       } else if (payload.type === 'call-ended') {
-        onCallEnded?.();
+        onCallEndedRef.current?.();
       }
     });
 
@@ -256,13 +288,69 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
     });
 
     return () => {
+      hasOfferedRef.current = false;
       if (pcRef.current) {
         pcRef.current.close();
         pcRef.current = null;
       }
       supabase.removeChannel(channel);
     };
-  }, [interviewId, currentProfile, getOrCreatePC, onCallEnded, supabase]);
+  }, [
+    interviewId,
+    currentProfile.id,
+    currentProfile.role,
+    currentProfile.name,
+    getOrCreatePC,
+    attachTracksInOrder,
+    supabase,
+  ]);
+
+  // Initiate WebRTC Offer once both Peer is present and localStream is ready
+  useEffect(() => {
+    async function initiateOffer() {
+      if (
+        currentProfile.role === 'interviewer' &&
+        peerProfile &&
+        localStream &&
+        !hasOfferedRef.current &&
+        channelRef.current
+      ) {
+        const pc = getOrCreatePC();
+        if (pc.signalingState === 'stable') {
+          hasOfferedRef.current = true;
+          try {
+            attachTracksInOrder(pc, localStream);
+            const offer = await pc.createOffer();
+            await pc.setLocalDescription(offer);
+
+            channelRef.current.send({
+              type: 'broadcast',
+              event: 'signal',
+              payload: {
+                type: 'offer',
+                senderId: currentProfile.id,
+                recipientId: peerProfile.id,
+                sdp: offer,
+                timestamp: Date.now(),
+              } as SignalingPayload,
+            });
+          } catch (err: unknown) {
+            console.error('Failed to create/send WebRTC offer:', err);
+            hasOfferedRef.current = false;
+          }
+        }
+      }
+    }
+
+    initiateOffer();
+  }, [
+    currentProfile.role,
+    currentProfile.id,
+    peerProfile,
+    localStream,
+    getOrCreatePC,
+    attachTracksInOrder,
+  ]);
 
   // Media Controls
   const toggleMic = useCallback(() => {
