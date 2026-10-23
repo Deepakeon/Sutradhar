@@ -1,3 +1,4 @@
+
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
 export type Database = {
@@ -26,28 +27,60 @@ isOneToOne: false
                   ]
                 },"interviews": {
                   Row: {
-                    "candidate_id": string,"created_at": string,"duration_seconds": number,"format": string,"id": string,"interviewer_id": string,"master_recording_url": string | null,"scheduled_at": string,"status": string,"title": string,"total_chunks": number,"updated_at": string
+                    "candidate_id": string,"compatibility_score": number | null,"created_at": string,"duration_seconds": number,"format": string,"id": string,"interviewer_id": string,"master_recording_url": string | null,"meeting_url": string | null,"notes": string | null,"scheduled_at": string,"status": Database["private"]['Enums']["interview_status"],"title": string,"total_chunks": number,"transcript": string | null,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "candidate_id": string,"created_at"?: string,"duration_seconds"?: number,"format"?: string,"id"?: string,"interviewer_id": string,"master_recording_url"?: string | null,"scheduled_at"?: string,"status"?: string,"title"?: string,"total_chunks"?: number,"updated_at"?: string
+                    "candidate_id": string,"compatibility_score"?: number | null,"created_at"?: string,"duration_seconds"?: number,"format"?: string,"id"?: string,"interviewer_id": string,"master_recording_url"?: string | null,"meeting_url"?: string | null,"notes"?: string | null,"scheduled_at"?: string,"status"?: Database["private"]['Enums']["interview_status"],"title"?: string,"total_chunks"?: number,"transcript"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "candidate_id"?: string,"created_at"?: string,"duration_seconds"?: number,"format"?: string,"id"?: string,"interviewer_id"?: string,"master_recording_url"?: string | null,"scheduled_at"?: string,"status"?: string,"title"?: string,"total_chunks"?: number,"updated_at"?: string
+                    "candidate_id"?: string,"compatibility_score"?: number | null,"created_at"?: string,"duration_seconds"?: number,"format"?: string,"id"?: string,"interviewer_id"?: string,"master_recording_url"?: string | null,"meeting_url"?: string | null,"notes"?: string | null,"scheduled_at"?: string,"status"?: Database["private"]['Enums']["interview_status"],"title"?: string,"total_chunks"?: number,"transcript"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
-                    
+                    {
+      foreignKeyName: "interviews_candidate_id_fkey"
+      columns: ["candidate_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "interviews_interviewer_id_fkey"
+      columns: ["interviewer_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
+                  ]
+                },"profile_skills": {
+                  Row: {
+                    "created_at": string,"id": string,"proficiency": Database["private"]['Enums']["skill_proficiency"],"profile_id": string,"skill_ids": (string)[],"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"proficiency"?: Database["private"]['Enums']["skill_proficiency"],"profile_id": string,"skill_ids"?: (string)[],"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"proficiency"?: Database["private"]['Enums']["skill_proficiency"],"profile_id"?: string,"skill_ids"?: (string)[],"updated_at"?: string
+                  }
+                  Relationships: [
+                    {
+      foreignKeyName: "profile_skills_profile_id_fkey"
+      columns: ["profile_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    }
                   ]
                 },"profiles": {
                   Row: {
-                    "avatar_url": string | null,"created_at": string,"email": string | null,"full_name": string | null,"id": string,"updated_at": string
+                    "availability_schedule": Json | null,"avatar_url": string | null,"created_at": string,"email": string | null,"full_name": string | null,"headline": string | null,"id": string,"objective": string | null,"roles_free_text": string | null,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "avatar_url"?: string | null,"created_at"?: string,"email"?: string | null,"full_name"?: string | null,"id": string,"updated_at"?: string
+                    "availability_schedule"?: Json | null,"avatar_url"?: string | null,"created_at"?: string,"email"?: string | null,"full_name"?: string | null,"headline"?: string | null,"id": string,"objective"?: string | null,"roles_free_text"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "avatar_url"?: string | null,"created_at"?: string,"email"?: string | null,"full_name"?: string | null,"id"?: string,"updated_at"?: string
+                    "availability_schedule"?: Json | null,"avatar_url"?: string | null,"created_at"?: string,"email"?: string | null,"full_name"?: string | null,"headline"?: string | null,"id"?: string,"objective"?: string | null,"roles_free_text"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     
@@ -61,7 +94,7 @@ isOneToOne: false
             [_ in never]: never
           }
           Enums: {
-            [_ in never]: never
+            "interview_status": "pending"|"accepted"|"declined"|"revoked"|"completed"|"cancelled","skill_proficiency": "beginner"|"intermediate"|"expert"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -74,8 +107,26 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "get_my_profile":
+            "create_interview":
+{ Args: { "candidate_id": string,"compatibility_score"?: number,"format"?: string,"interviewer_id": string,"meeting_url"?: string,"notes"?: string,"scheduled_at"?: string,"title"?: string,"transcript"?: string }; Returns: Json
+                           },
+"get_my_profile":
 { Args: Record<PropertyKey, never>; Returns: Json
+                           },
+"get_profile":
+{ Args: { "target_profile_id"?: string }; Returns: Json
+                           },
+"launch_meeting_room":
+{ Args: { "interview_id": string }; Returns: Json
+                           },
+"update_interview_status":
+{ Args: { "interview_id": string,"notes"?: string,"status": string }; Returns: Json
+                           },
+"update_profile":
+{ Args: { "availability"?: Json,"headline"?: string,"objective"?: string,"roles"?: string,"skills"?: Json }; Returns: Json
+                           },
+"update_status":
+{ Args: { "interview_id": string,"notes"?: string,"status": string }; Returns: Json
                            }
           }
           Enums: {
@@ -195,7 +246,7 @@ export type CompositeTypes<
 export const Constants = {
   "private": {
           Enums: {
-            
+            "interview_status": ["pending", "accepted", "declined", "revoked", "completed", "cancelled"],"skill_proficiency": ["beginner", "intermediate", "expert"]
           }
         },"public": {
           Enums: {
