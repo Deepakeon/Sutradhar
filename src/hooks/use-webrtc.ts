@@ -173,15 +173,6 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
     const pc = new RTCPeerConnection(getIceConfiguration());
     pcRef.current = pc;
 
-    if (typeof pc.addTransceiver === 'function') {
-      try {
-        pc.addTransceiver('audio', { direction: 'sendrecv' });
-        pc.addTransceiver('video', { direction: 'sendrecv' });
-      } catch {
-        // Fallback if not supported in mock/environment
-      }
-    }
-
     pc.onconnectionstatechange = () => {
       setConnectionState(pc.connectionState);
       if (pc.connectionState === 'failed' || pc.connectionState === 'closed') {
@@ -205,27 +196,10 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
     };
 
     pc.ontrack = (event) => {
-      if (event.streams && event.streams[0]) {
-        const stream = event.streams[0];
-        setRemoteStream(new MediaStream(stream.getTracks()));
-
-        stream.onaddtrack = () => {
-          setRemoteStream(new MediaStream(stream.getTracks()));
-        };
-        stream.onremovetrack = () => {
-          setRemoteStream(new MediaStream(stream.getTracks()));
-        };
-      } else {
-        setRemoteStream((prev) => {
-          if (!prev) {
-            return new MediaStream([event.track]);
-          }
-          if (!prev.getTracks().some((t) => t.id === event.track.id)) {
-            prev.addTrack(event.track);
-          }
-          return new MediaStream(prev.getTracks());
-        });
-      }
+      setRemoteStream((prev) => {
+        const existing = prev ? prev.getTracks().filter((t) => t.id !== event.track.id) : [];
+        return new MediaStream([...existing, event.track]);
+      });
     };
 
     // Add local tracks to PC in deterministic order (audio then video)
@@ -289,8 +263,23 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
       if (payload.type === 'offer') {
         await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp!));
 
+        // If localStream is still initializing on the answerer, wait briefly (up to 2.5s)
+        // so tracks are bound directly into the answer SDP
+        if (!localStreamRef.current) {
+          const start = Date.now();
+          while (!localStreamRef.current && Date.now() - start < 2500) {
+            await new Promise((resolve) => setTimeout(resolve, 100));
+          }
+        }
+
         if (localStreamRef.current) {
           attachTracksInOrder(pc, localStreamRef.current);
+        } else {
+          // If stream still pending, ensure transceivers stay sendrecv for future replaceTrack
+          const transceivers = typeof pc.getTransceivers === 'function' ? pc.getTransceivers() : [];
+          transceivers.forEach((t) => {
+            t.direction = 'sendrecv';
+          });
         }
 
         // Process queued ICE candidates
@@ -380,8 +369,12 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
   // Initiate WebRTC Offer once both Peer is present and localStream is ready
   useEffect(() => {
     async function initiateOffer() {
+      const isOfferRole =
+        currentProfile.role === 'interviewer' ||
+        (peerProfile?.role !== 'interviewer' && currentProfile.id > (peerProfile?.id || ''));
+
       if (
-        currentProfile.role === 'interviewer' &&
+        isOfferRole &&
         peerProfile &&
         localStream &&
         !hasOfferedRef.current &&
