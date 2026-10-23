@@ -78,25 +78,43 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
   const attachTracksInOrder = useCallback((pc: RTCPeerConnection, stream: MediaStream) => {
     const audioTrack = stream.getAudioTracks()[0];
     const videoTrack = stream.getVideoTracks()[0];
+
+    const transceivers = typeof pc.getTransceivers === 'function' ? pc.getTransceivers() : [];
+    const audioTransceiver = transceivers.find(
+      (t) => t.receiver?.track?.kind === 'audio' || t.sender?.track?.kind === 'audio'
+    );
+    const videoTransceiver = transceivers.find(
+      (t) => t.receiver?.track?.kind === 'video' || t.sender?.track?.kind === 'video'
+    );
     const senders = typeof pc.getSenders === 'function' ? pc.getSenders() : [];
 
     // 1. Audio track (always m-line 0)
     if (audioTrack) {
-      const audioSender = senders.find((s) => s.track?.kind === 'audio');
-      if (audioSender) {
-        audioSender.replaceTrack(audioTrack);
+      if (audioTransceiver?.sender) {
+        audioTransceiver.sender.replaceTrack(audioTrack);
+        audioTransceiver.direction = 'sendrecv';
       } else {
-        pc.addTrack(audioTrack, stream);
+        const audioSender = senders.find((s) => s.track?.kind === 'audio');
+        if (audioSender) {
+          audioSender.replaceTrack(audioTrack);
+        } else {
+          pc.addTrack(audioTrack, stream);
+        }
       }
     }
 
     // 2. Video track (always m-line 1)
     if (videoTrack) {
-      const videoSender = senders.find((s) => s.track?.kind === 'video');
-      if (videoSender) {
-        videoSender.replaceTrack(videoTrack);
+      if (videoTransceiver?.sender) {
+        videoTransceiver.sender.replaceTrack(videoTrack);
+        videoTransceiver.direction = 'sendrecv';
       } else {
-        pc.addTrack(videoTrack, stream);
+        const videoSender = senders.find((s) => s.track?.kind === 'video');
+        if (videoSender) {
+          videoSender.replaceTrack(videoTrack);
+        } else {
+          pc.addTrack(videoTrack, stream);
+        }
       }
     }
   }, []);
@@ -188,7 +206,15 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
 
     pc.ontrack = (event) => {
       if (event.streams && event.streams[0]) {
-        setRemoteStream(event.streams[0]);
+        const stream = event.streams[0];
+        setRemoteStream(new MediaStream(stream.getTracks()));
+
+        stream.onaddtrack = () => {
+          setRemoteStream(new MediaStream(stream.getTracks()));
+        };
+        stream.onremovetrack = () => {
+          setRemoteStream(new MediaStream(stream.getTracks()));
+        };
       } else {
         setRemoteStream((prev) => {
           if (!prev) {
@@ -261,11 +287,11 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
       const pc = getOrCreatePC();
 
       if (payload.type === 'offer') {
+        await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp!));
+
         if (localStreamRef.current) {
           attachTracksInOrder(pc, localStreamRef.current);
         }
-
-        await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp!));
 
         // Process queued ICE candidates
         while (iceCandidateQueue.current.length > 0) {
