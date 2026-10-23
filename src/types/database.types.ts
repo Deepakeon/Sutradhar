@@ -53,21 +53,33 @@ isOneToOne: false
                   ]
                 },"profile_skills": {
                   Row: {
-                    "created_at": string,"id": string,"proficiency": Database["private"]['Enums']["skill_proficiency"],"profile_id": string,"skill_ids": (string)[],"updated_at": string
+                    "created_at": string,"id": string,"proficiency": string,"profile_id": string,"skill_id": string,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "created_at"?: string,"id"?: string,"proficiency"?: Database["private"]['Enums']["skill_proficiency"],"profile_id": string,"skill_ids"?: (string)[],"updated_at"?: string
+                    "created_at"?: string,"id"?: string,"proficiency"?: string,"profile_id": string,"skill_id": string,"updated_at"?: string
                   }
                   Update: {
-                    "created_at"?: string,"id"?: string,"proficiency"?: Database["private"]['Enums']["skill_proficiency"],"profile_id"?: string,"skill_ids"?: (string)[],"updated_at"?: string
+                    "created_at"?: string,"id"?: string,"proficiency"?: string,"profile_id"?: string,"skill_id"?: string,"updated_at"?: string
                   }
                   Relationships: [
                     {
+      foreignKeyName: "profile_skills_proficiency_fkey"
+      columns: ["proficiency"]
+isOneToOne: false
+      referencedRelation: "skill_proficiency"
+      referencedColumns: ["id"]
+    },{
       foreignKeyName: "profile_skills_profile_id_fkey"
       columns: ["profile_id"]
 isOneToOne: false
       referencedRelation: "profiles"
+      referencedColumns: ["id"]
+    },{
+      foreignKeyName: "profile_skills_skill_id_fkey"
+      columns: ["skill_id"]
+isOneToOne: false
+      referencedRelation: "skills"
       referencedColumns: ["id"]
     }
                   ]
@@ -85,6 +97,34 @@ isOneToOne: false
                   Relationships: [
                     
                   ]
+                },"skill_proficiency": {
+                  Row: {
+                    "created_at": string,"id": string,"name": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id": string,"name": string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"name"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
+                },"skills": {
+                  Row: {
+                    "created_at": string,"id": string,"name": string,"updated_at": string
+                  }
+                  ComputedFields: never
+                  Insert: {
+                    "created_at"?: string,"id"?: string,"name": string,"updated_at"?: string
+                  }
+                  Update: {
+                    "created_at"?: string,"id"?: string,"name"?: string,"updated_at"?: string
+                  }
+                  Relationships: [
+                    
+                  ]
                 }
           }
           Views: {
@@ -94,7 +134,7 @@ isOneToOne: false
             [_ in never]: never
           }
           Enums: {
-            "interview_status": "pending"|"accepted"|"declined"|"revoked"|"completed"|"cancelled","skill_proficiency": "beginner"|"intermediate"|"expert"
+            "interview_status": "pending"|"accepted"|"declined"|"revoked"|"completed"|"cancelled"
           }
           CompositeTypes: {
             [_ in never]: never
@@ -246,7 +286,7 @@ export type CompositeTypes<
 export const Constants = {
   "private": {
           Enums: {
-            "interview_status": ["pending", "accepted", "declined", "revoked", "completed", "cancelled"],"skill_proficiency": ["beginner", "intermediate", "expert"]
+            "interview_status": ["pending", "accepted", "declined", "revoked", "completed", "cancelled"]
           }
         },"public": {
           Enums: {
