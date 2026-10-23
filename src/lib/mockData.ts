@@ -5,7 +5,7 @@ export const INITIAL_USER_ACCOUNT: UserAccount = {
   name: 'Alex Rivera',
   email: 'alex.rivera@sutradhar.dev',
   avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-  activeRole: 'candidate',
+  activeRole: 'interviewer',
   candidateProfile: {
     headline: 'Senior Distributed Systems Engineer targeting Staff / Principal Roles',
     targetRoles: [
@@ -95,7 +95,15 @@ export const INITIAL_USER_ACCOUNT: UserAccount = {
     ]
   },
   interviewerProfile: {
-    headline: 'Staff Bar Raiser & Infrastructure Architect | 180+ Mock Sessions Conducted',
+    headline: 'Senior Distributed Systems Engineer targeting Staff / Principal Roles',
+    objectives: 'Transitioning from Senior to Staff level at top-tier distributed data infrastructure companies. Honing deep system design trade-offs, catastrophic failure scenarios, and multi-tenant partitioning strategies.',
+    targetRoles: [
+      'Staff Distributed Systems Engineer',
+      'Principal Infrastructure Architect',
+      'Lead Storage Engine Developer'
+    ],
+    timezone: 'America/New_York (UTC-5)',
+    weeklyAvailability: '8 hours / week',
     domains: [
       'High-Scale Distributed Systems',
       'Fault-Tolerant Architecture',
@@ -103,13 +111,13 @@ export const INITIAL_USER_ACCOUNT: UserAccount = {
       'Technical Leadership & RFC Ownership'
     ],
     context: {
-      interviewPhilosophy: 'I treat mock interviews as rigorous peer collaboration sessions. Rather than penalizing minor syntax glitches, I drill down on edge cases, backpressure handling, failure blast radiuses, and explicit trade-offs between latency, throughput, and consistency.',
+      interviewPhilosophy: 'Transitioning from Senior to Staff level at top-tier distributed data infrastructure companies. Honing deep system design trade-offs, catastrophic failure scenarios, and multi-tenant partitioning strategies.',
       sessionFormats: [
         '60m Staff System Design Deep-Dive',
         '45m Concurrency & Failure Recovery Coding',
         '45m Cross-Functional Staff Behavioral'
       ],
-      availabilitySchedule: 'Tuesdays & Thursdays (6:00 PM – 9:30 PM EST), Saturdays (10:00 AM – 3:00 PM EST)',
+      availabilitySchedule: '8 hours / week (Tues & Thurs 6:00 PM – 9:30 PM EST)',
       preferredTimezone: 'America/New_York (UTC-5)',
       maxSessionsPerWeek: 4,
       hourlyHonorarium: 'Free Barter / Community Credits'
@@ -117,31 +125,51 @@ export const INITIAL_USER_ACCOUNT: UserAccount = {
     skills: [
       {
         id: 'sk_i1',
-        name: 'Staff System Design Evaluation',
-        category: 'System Design',
+        name: 'Distributed Consensus (Raft / Paxos)',
+        proficiency: 'Expert',
+        category: 'Consensus',
         level: 'Staff Bar Raiser',
         interviewsConducted: 84
       },
       {
         id: 'sk_i2',
-        name: 'Distributed Systems & Trade-offs',
-        category: 'Architecture',
+        name: 'High-Throughput Storage & LSM Trees',
+        proficiency: 'Expert',
+        category: 'Storage',
         level: 'Staff Bar Raiser',
         interviewsConducted: 65
       },
       {
         id: 'sk_i3',
-        name: 'Concurrency & Deadlock Resolution',
+        name: 'Go & Rust Systems Programming',
+        proficiency: 'Expert',
+        category: 'Architecture',
+        level: 'Staff Bar Raiser',
+        interviewsConducted: 52
+      },
+      {
+        id: 'sk_i4',
+        name: 'Concurrency & Lock-Free Structures',
+        proficiency: 'Intermediate',
         category: 'Concurrency',
         level: 'Senior Assessor',
         interviewsConducted: 42
       },
       {
-        id: 'sk_i4',
-        name: 'Staff Leadership & Cross-Team Impact',
-        category: 'Leadership',
+        id: 'sk_i5',
+        name: 'Kubernetes & Service Mesh Internals',
+        proficiency: 'Intermediate',
+        category: 'DevOps',
+        level: 'Senior Assessor',
+        interviewsConducted: 30
+      },
+      {
+        id: 'sk_i6',
+        name: 'Catastrophic Failure Drills',
+        proficiency: 'Beginner',
+        category: 'Reliability',
         level: 'Domain Specialist',
-        interviewsConducted: 38
+        interviewsConducted: 14
       }
     ],
     experience: {
@@ -153,7 +181,22 @@ export const INITIAL_USER_ACCOUNT: UserAccount = {
         'Certified Principal Interview Bar Raiser',
         'Distributed Architecture Hiring Committee Member'
       ]
-    }
+    },
+    jobDescriptions: [
+      {
+        id: 'jd_1',
+        roleTitle: 'Staff Distributed Systems Engineer (Storage & Consensus)',
+        note: 'Candidate will be evaluated on Raft partition recovery, zero-copy I/O throughput trade-offs, and communication during live architecture grilling.',
+        timingAvailable: 'Tues & Thurs: 6:00 PM – 9:30 PM EST',
+        createdAt: '2026-10-15',
+        skills: [
+          { id: 'jd_s1', name: 'Raft / Paxos Consensus', classification: 'Important' },
+          { id: 'jd_s2', name: 'LSM-Tree Storage Engines', classification: 'Important' },
+          { id: 'jd_s3', name: 'Go / Rust Concurrency', classification: 'Additional' },
+          { id: 'jd_s4', name: 'Linux Kernel eBPF & Zero-Copy', classification: 'Bonus' }
+        ]
+      }
+    ]
   }
 };
 
@@ -233,11 +276,20 @@ export const MATCHING_CANDIDATES: MatchingCandidate[] = [
     id: 'can_001',
     name: 'Kenji Sato',
     avatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=250&q=80',
+    headline: 'Senior Distributed Systems Engineer targeting Staff / Principal Roles',
     targetRole: 'Staff Distributed Systems Engineer',
+    objective: 'Transitioning from Senior to Staff level at top-tier distributed data infrastructure companies. Honing deep system design trade-offs, catastrophic failure scenarios, and multi-tenant partitioning strategies.',
     currentCompany: 'Snowflake',
     yearsExperience: 7,
+    availability: 'Weekdays: 6:00 PM – 9:00 PM EST (8 hrs/wk)',
     domains: ['Distributed Consensus', 'High-Scale Storage', 'Query Optimization'],
     keySkills: ['Raft State Machines', 'C++ / Rust', 'Distributed Locking', 'Metadata Services'],
+    skills: [
+      { name: 'Raft State Machines', proficiency: 'Expert' },
+      { name: 'C++ / Rust', proficiency: 'Expert' },
+      { name: 'Distributed Locking', proficiency: 'Intermediate' },
+      { name: 'Metadata Services', proficiency: 'Intermediate' }
+    ],
     preferredFormat: '60m Staff System Design Deep-Dive',
     compatibilityScore: 97,
     compatibilityReason: 'Strong alignment with your Raft consensus expertise and Staff Bar Raiser rubric.',
@@ -247,11 +299,20 @@ export const MATCHING_CANDIDATES: MatchingCandidate[] = [
     id: 'can_002',
     name: 'Priya Sharma',
     avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+    headline: 'Staff Infrastructure Engineer targeting Principal Architect Panels',
     targetRole: 'Principal Cloud Platform Engineer',
+    objective: 'Targeting multi-region zero-downtime failover and global transaction coordination for tier-1 hyperscale platforms.',
     currentCompany: 'Uber',
     yearsExperience: 9,
+    availability: 'Evenings: 7:00 PM – 10:00 PM EST (10 hrs/wk)',
     domains: ['Event-Driven Systems', 'Multi-Region Cloud Architecture', 'Kubernetes Internals'],
     keySkills: ['Kafka', 'Service Mesh', 'Disaster Recovery', 'Golang'],
+    skills: [
+      { name: 'Kafka', proficiency: 'Expert' },
+      { name: 'Service Mesh', proficiency: 'Expert' },
+      { name: 'Disaster Recovery', proficiency: 'Intermediate' },
+      { name: 'Golang', proficiency: 'Expert' }
+    ],
     preferredFormat: '60m Multi-Region Resiliency Mock',
     compatibilityScore: 94,
     compatibilityReason: 'Overlaps directly with your event streaming and catastrophic failover assessment strengths.',
@@ -261,52 +322,107 @@ export const MATCHING_CANDIDATES: MatchingCandidate[] = [
     id: 'can_003',
     name: 'David Chen',
     avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=250&q=80',
+    headline: 'Senior Backend Engineer targeting Staff Systems Track',
     targetRole: 'Senior Backend Engineer -> Staff Track',
+    objective: 'Deepening low-level lock contention debugging, high-throughput caching consistency, and distributed lock-free architecture.',
     currentCompany: 'Shopify',
     yearsExperience: 6,
+    availability: 'Weekends: 10:00 AM – 4:00 PM EST (6 hrs/wk)',
     domains: ['High-Throughput Transactions', 'Concurrency & Deadlocks', 'Distributed Caching'],
     keySkills: ['Redis Cluster', 'Lock-Free Queues', 'PostgreSQL Internals', 'Ruby/Go'],
+    skills: [
+      { name: 'Redis Cluster', proficiency: 'Expert' },
+      { name: 'Lock-Free Queues', proficiency: 'Intermediate' },
+      { name: 'PostgreSQL Internals', proficiency: 'Intermediate' },
+      { name: 'Ruby/Go', proficiency: 'Beginner' }
+    ],
     preferredFormat: '45m Concurrency & Lock-Free Code',
     compatibilityScore: 89,
     compatibilityReason: 'Seeking feedback on concurrency edge cases, matching your assessment specialty.',
     careerGoals: 'Needs practice identifying subtle race conditions and explaining lock contention bottlenecks under pressure.'
+  },
+  {
+    id: 'can_004',
+    name: 'Marcus Vance',
+    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
+    headline: 'Lead Storage Architect targeting Principal Storage Engine Roles',
+    targetRole: 'Principal Storage Architect',
+    objective: 'Refining disk I/O kernel bottlenecks, zero-copy socket fanout, and LSM-tree write amplification trade-offs.',
+    currentCompany: 'Databricks',
+    yearsExperience: 11,
+    availability: 'Flexible: Weekdays & Weekends (12 hrs/wk)',
+    domains: ['Storage Engines', 'Zero-Copy I/O', 'Linux Kernel'],
+    keySkills: ['LSM-Trees', 'Linux Kernel & eBPF', 'Storage Engines', 'Go / C++'],
+    skills: [
+      { name: 'LSM-Trees', proficiency: 'Expert' },
+      { name: 'Linux Kernel & eBPF', proficiency: 'Expert' },
+      { name: 'Storage Engines', proficiency: 'Expert' },
+      { name: 'Go / C++', proficiency: 'Intermediate' }
+    ],
+    preferredFormat: '60m Storage Engine Deep-Dive',
+    compatibilityScore: 92,
+    compatibilityReason: 'Direct overlap with storage engines, LSM trees, and zero-copy performance evaluation.',
+    careerGoals: 'Looking for harsh critique on storage tiering, compaction bottlenecks, and WAL durability mechanisms.'
+  },
+  {
+    id: 'can_005',
+    name: 'Ananya Patel',
+    avatar: 'https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&w=250&q=80',
+    headline: 'Staff Site Reliability Engineer targeting Principal Resilience Lead',
+    targetRole: 'Staff Site Reliability Engineer',
+    objective: 'Practicing catastrophic cross-region partition drills, cascading circuit breaker recovery, and SLO budget negotiations.',
+    currentCompany: 'Cloudflare',
+    yearsExperience: 8,
+    availability: 'Weekdays: 5:00 PM – 8:00 PM EST (6 hrs/wk)',
+    domains: ['Reliability & Chaos', 'Service Meshes', 'Circuit Breakers'],
+    keySkills: ['Chaos Engineering', 'Kubernetes Internals', 'Distributed Tracing', 'Circuit Breakers'],
+    skills: [
+      { name: 'Chaos Engineering', proficiency: 'Expert' },
+      { name: 'Kubernetes Internals', proficiency: 'Intermediate' },
+      { name: 'Distributed Tracing', proficiency: 'Intermediate' },
+      { name: 'Circuit Breakers', proficiency: 'Beginner' }
+    ],
+    preferredFormat: '45m Chaos & Failure Injections Mock',
+    compatibilityScore: 86,
+    compatibilityReason: 'Seeking calibration on catastrophic failure triage and live post-mortem defense.',
+    careerGoals: 'Preparing for Principal SRE evaluation panels across multi-cloud infrastructure companies.'
   }
 ];
 
 export const INITIAL_SESSIONS: InterviewSession[] = [
   {
     id: 'ses_001',
-    candidateId: 'usr_me_001',
-    candidateName: 'Alex Rivera',
+    candidateId: 'can_002',
+    candidateName: 'Priya Sharma',
     candidateAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-    candidateRole: 'Senior Distributed Systems Engineer',
-    interviewerId: 'int_001',
-    interviewerName: 'Elena Rostova',
-    interviewerAvatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=250&q=80',
-    interviewerCompany: 'Stripe',
+    candidateRole: 'Principal Cloud Platform Engineer @ Uber',
+    interviewerId: 'usr_me_001',
+    interviewerName: 'Alex Rivera',
+    interviewerAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+    interviewerCompany: 'ScaleCloud Infrastructure',
     format: '60m Staff System Design Deep-Dive',
     scheduledAt: 'Tomorrow, 5:00 PM EST',
     status: 'accepted',
-    originatorRole: 'candidate',
-    meetingUrl: 'https://meet.sutradhar.dev/room/staff-system-design-elena-alex',
+    originatorRole: 'interviewer',
+    meetingUrl: 'https://meet.sutradhar.dev/room/staff-system-design-priya-alex',
     candidateNotes: 'Would love to focus on designing a globally distributed, idempotent ledger with Raft leader election during network partitions.',
     interviewerNotes: 'Confirmed. I have prepared a real-world multi-datacenter partition scenario with asymmetric network packet drop.'
   },
   {
     id: 'ses_002',
-    candidateId: 'usr_me_001',
-    candidateName: 'Alex Rivera',
-    candidateAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-    candidateRole: 'Senior Distributed Systems Engineer',
-    interviewerId: 'int_002',
-    interviewerName: 'Marcus Vance',
-    interviewerAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=250&q=80',
-    interviewerCompany: 'Databricks',
+    candidateId: 'can_001',
+    candidateName: 'Kenji Sato',
+    candidateAvatar: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=250&q=80',
+    candidateRole: 'Staff Distributed Systems Engineer @ Snowflake',
+    interviewerId: 'usr_me_001',
+    interviewerName: 'Alex Rivera',
+    interviewerAvatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+    interviewerCompany: 'ScaleCloud Infrastructure',
     format: '60m Data Engine Architecture',
     scheduledAt: 'In 3 days, 6:30 PM EST',
     status: 'pending',
-    originatorRole: 'candidate',
-    candidateNotes: 'Targeting Databricks storage team; want to drill into compaction algorithms and write amplification trade-offs.'
+    originatorRole: 'interviewer',
+    candidateNotes: 'Targeting storage engine scaling; want to drill into compaction algorithms and write amplification trade-offs.'
   },
   {
     id: 'ses_003',

@@ -1,34 +1,32 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MatchingInterviewer } from '@/types';
+import { MatchingCandidate } from '@/types';
 import { useApp } from '@/context/AppContext';
 
-interface RequestInterviewModalProps {
-  interviewer: MatchingInterviewer | null;
+interface InviteCandidateModalProps {
+  candidate: MatchingCandidate | null;
   onClose: () => void;
 }
 
-export function RequestInterviewModal({ interviewer, onClose }: RequestInterviewModalProps) {
+export function InviteCandidateModal({ candidate, onClose }: InviteCandidateModalProps) {
   const { requestInterview } = useApp();
-  const [selectedFormat, setSelectedFormat] = useState(
-    interviewer?.formats[0] || '60m Staff System Design Deep-Dive'
-  );
-  const [scheduledDate, setScheduledDate] = useState('Tomorrow, 6:00 PM EST');
+  const [selectedFormat, setSelectedFormat] = useState(candidate?.preferredFormat || '60m Staff System Design Deep-Dive');
+  const [scheduledDate, setScheduledDate] = useState('This Friday, 6:00 PM EST');
   const [notes, setNotes] = useState('');
 
-  if (!interviewer) return null;
+  if (!candidate) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     requestInterview(
-      interviewer.id,
-      interviewer.name,
-      interviewer.avatar,
-      interviewer.company,
+      candidate.id,
+      candidate.name,
+      candidate.avatar,
+      candidate.targetRole,
       selectedFormat,
       scheduledDate,
-      notes || 'Looking forward to diving into high-scale design trade-offs and receiving staff calibration feedback.'
+      notes || `Hi ${candidate.name}, I reviewed your target focus and would love to conduct a calibration mock interview on ${selectedFormat}.`
     );
     onClose();
   };
@@ -40,16 +38,16 @@ export function RequestInterviewModal({ interviewer, onClose }: RequestInterview
           <div className="flex items-center gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src={interviewer.avatar}
-              alt={interviewer.name}
+              src={candidate.avatar}
+              alt={candidate.name}
               className="w-12 h-12 rounded-full border border-[#3d3a39] object-cover"
             />
             <div>
               <h3 className="text-lg font-bold text-[#f2f2f2]">
-                Request Mock Interview with {interviewer.name}
+                Invite {candidate.name} to Mock Interview
               </h3>
               <p className="text-xs text-[#bdbdbd]">
-                {interviewer.currentTitle} • {interviewer.company}
+                {candidate.targetRole} • Currently {candidate.currentCompany}
               </p>
             </div>
           </div>
@@ -61,42 +59,28 @@ export function RequestInterviewModal({ interviewer, onClose }: RequestInterview
           </button>
         </div>
 
-        {/* Compatibility highlight */}
+        {/* Compatibility badge */}
         <div className="my-4 p-3 rounded-[6px] bg-[#1a1a1a] border border-[#00d992]/30 flex items-center gap-3">
           <span className="px-2 py-0.5 rounded-full text-xs font-mono font-bold bg-[#00d992]/20 text-[#00d992] border border-[#00d992]/40">
-            {interviewer.compatibilityScore}% MATCH
+            {candidate.compatibilityScore}% MATCH
           </span>
           <p className="text-xs text-[#bdbdbd]">
-            {interviewer.compatibilityReason}
+            {candidate.compatibilityReason}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-[#bdbdbd] mb-1.5 uppercase font-mono tracking-wider">
-              Session Format
+              Interview Format / Rubric
             </label>
-            <div className="space-y-2">
-              {interviewer.formats.map((fmt) => (
-                <label
-                  key={fmt}
-                  className={`flex items-center justify-between p-3 rounded-[6px] border cursor-pointer transition-all ${selectedFormat === fmt
-                      ? 'bg-[#1a1a1a] border-[#00d992] text-[#f2f2f2]'
-                      : 'bg-[#101010] border-[#3d3a39] text-[#bdbdbd] hover:border-[#8b949e]'
-                    }`}
-                >
-                  <span className="text-sm font-medium">{fmt}</span>
-                  <input
-                    type="radio"
-                    name="format"
-                    value={fmt}
-                    checked={selectedFormat === fmt}
-                    onChange={() => setSelectedFormat(fmt)}
-                    className="accent-[#00d992]"
-                  />
-                </label>
-              ))}
-            </div>
+            <input
+              type="text"
+              value={selectedFormat}
+              onChange={(e) => setSelectedFormat(e.target.value)}
+              className="w-full bg-[#1a1a1a] border border-[#3d3a39] rounded-[6px] px-3.5 py-2 text-sm text-[#f2f2f2] focus:outline-hidden focus:border-[#00d992]"
+              required
+            />
           </div>
 
           <div>
@@ -108,21 +92,20 @@ export function RequestInterviewModal({ interviewer, onClose }: RequestInterview
               value={scheduledDate}
               onChange={(e) => setScheduledDate(e.target.value)}
               className="w-full bg-[#1a1a1a] border border-[#3d3a39] rounded-[6px] px-3.5 py-2 text-sm text-[#f2f2f2] focus:outline-hidden focus:border-[#00d992]"
-              placeholder="e.g., Tomorrow, 6:00 PM EST"
               required
             />
           </div>
 
           <div>
             <label className="block text-xs font-medium text-[#bdbdbd] mb-1.5 uppercase font-mono tracking-wider">
-              Specific Prep Goals / System Design Topic
+              Personal Note / Invitation Message
             </label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
-              className="w-full bg-[#1a1a1a] border border-[#3d3a39] rounded-[6px] px-3.5 py-2 text-sm text-[#f2f2f2] focus:outline-hidden focus:border-[#00d992] placeholder-[#8b949e]"
-              placeholder="e.g., I'd like to simulate an active-active cross-region consensus state machine with network partitioning failure modes."
+              placeholder="e.g., Happy to run an end-to-end distributed system design simulation with detailed feedback afterwards."
+              className="w-full bg-[#1a1a1a] border border-[#3d3a39] rounded-[6px] px-3.5 py-2 text-sm text-[#f2f2f2] focus:outline-hidden focus:border-[#00d992]"
             />
           </div>
 
@@ -138,7 +121,7 @@ export function RequestInterviewModal({ interviewer, onClose }: RequestInterview
               type="submit"
               className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all px-4 py-2 text-xs cursor-pointer"
             >
-              Send Interview Request
+              Send Session Invitation
             </button>
           </div>
         </form>
