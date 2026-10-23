@@ -1,4 +1,4 @@
-import { Database } from './database.types';
+import type { Database } from './database.types';
 
 export type InterviewRow = Database['private']['Tables']['interviews']['Row'];
 export type InterviewInsert = Database['private']['Tables']['interviews']['Insert'];
@@ -7,7 +7,7 @@ export type InterviewUpdate = Database['private']['Tables']['interviews']['Updat
 export type InterviewChunkRow = Database['private']['Tables']['interview_chunks']['Row'];
 export type InterviewChunkInsert = Database['private']['Tables']['interview_chunks']['Insert'];
 
-export type InterviewStatus = 'pending' | 'accepted' | 'in_progress' | 'completed' | 'cancelled' | 'declined';
+export type InterviewStatus = Database['private']['Enums']['interview_status'];
 
 export interface RoomParticipant {
   id: string;
