@@ -16,8 +16,8 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Sutradhar | Dual-Role Peer Mock Interview Platform",
-  description: "Enable a single account to seamlessly operate as both Candidate and Interviewer with dedicated dashboards and role-specific workflows.",
+  title: "Sutradhar | Technical Interview Calibration Platform",
+  description: "Senior technical mock interview evaluation, candidate matching, and automated scorecards.",
 };
 
 export default function RootLayout({

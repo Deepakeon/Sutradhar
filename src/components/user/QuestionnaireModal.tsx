@@ -77,14 +77,14 @@ export function QuestionnaireModal({ session, onClose }: QuestionnaireModalProps
           <div>
             <div className="flex items-center gap-2">
               <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#00d992]/15 text-[#00d992] border border-[#00d992]/40">
-                POST-INTERVIEW QUESTIONNAIRE
+                POST-SESSION QUESTIONNAIRE
               </span>
               <span className="text-xs text-[#8b949e] font-mono">
                 {session.format}
               </span>
             </div>
             <h3 className="text-lg font-bold text-[#f2f2f2] mt-1">
-              Candidate Scorecard: {session.candidateName}
+              Candidate Evaluation: {session.candidateName}
             </h3>
             <p className="text-xs text-[#8b949e]">
               Role target: {session.candidateRole}
@@ -103,7 +103,7 @@ export function QuestionnaireModal({ session, onClose }: QuestionnaireModalProps
           {/* Recommendation Selector */}
           <div>
             <label className="block text-xs font-mono uppercase text-[#bdbdbd] mb-2">
-              Overall Hiring Recommendation
+              Overall Recommendation
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
               {(['Strong Hire', 'Hire', 'Lean Hire', 'Lean No Hire', 'No Hire'] as const).map((rec) => (
@@ -168,13 +168,13 @@ export function QuestionnaireModal({ session, onClose }: QuestionnaireModalProps
 
           <div>
             <label className="block text-xs font-mono uppercase text-[#8b949e] mb-1.5">
-              Detailed Committee Calibration Summary
+              Detailed Calibration Summary
             </label>
             <textarea
               value={detailedFeedback}
               onChange={(e) => setDetailedFeedback(e.target.value)}
               rows={3}
-              placeholder="Comprehensive summary of how candidate compares against Staff bar benchmarks..."
+              placeholder="Comprehensive summary of how candidate compares against benchmarks..."
               className="w-full bg-[#1a1a1a] border border-[#3d3a39] rounded-[6px] p-3 text-xs text-[#f2f2f2] focus:outline-hidden focus:border-[#00d992]"
               required
             />
@@ -195,7 +195,7 @@ export function QuestionnaireModal({ session, onClose }: QuestionnaireModalProps
             form="questionnaire-form"
             className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all px-4 py-2 text-xs cursor-pointer"
           >
-            Submit Scorecard
+            Submit Evaluation
           </button>
         </div>
       </div>
