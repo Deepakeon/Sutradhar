@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState, useCallback } from 'react';
 import { RoomParticipant } from '@/types/interview';
 
 interface VideoGridProps {
@@ -22,6 +22,7 @@ export function VideoGrid({
 }: VideoGridProps) {
   const localVideoRef = useRef<HTMLVideoElement | null>(null);
   const remoteVideoRef = useRef<HTMLVideoElement | null>(null);
+  const [autoplayBlocked, setAutoplayBlocked] = useState(false);
 
   const hasRemoteVideo = Boolean(
     remoteStream && remoteStream.getVideoTracks().some((t) => t.enabled)
@@ -43,8 +44,8 @@ export function VideoGrid({
     }
   }, [localStream, isCameraOff]);
 
-  // Attach remote stream and ensure playback
-  useEffect(() => {
+  // Attempt to play remote media (handles mobile browser autoplay policies)
+  const playRemoteMedia = useCallback(() => {
     const video = remoteVideoRef.current;
     if (video && remoteStream) {
       if (video.srcObject !== remoteStream) {
@@ -52,22 +53,54 @@ export function VideoGrid({
       }
       const playPromise = video.play();
       if (playPromise !== undefined && typeof playPromise?.catch === 'function') {
-        playPromise.catch(() => {});
+        playPromise
+          .then(() => {
+            setAutoplayBlocked(false);
+          })
+          .catch((err) => {
+            console.warn('Remote video playback blocked (user gesture required):', err);
+            setAutoplayBlocked(true);
+          });
       }
     }
-  }, [remoteStream, hasRemoteVideo]);
+  }, [remoteStream]);
+
+  // Attach remote stream and ensure playback
+  useEffect(() => {
+    playRemoteMedia();
+  }, [playRemoteMedia, hasRemoteVideo]);
+
+  // Mobile user gesture unlock listener: any touch or click unlocks audio/video
+  useEffect(() => {
+    if (!autoplayBlocked) return;
+
+    const unlock = () => {
+      playRemoteMedia();
+    };
+
+    window.addEventListener('click', unlock, { once: true });
+    window.addEventListener('touchstart', unlock, { once: true });
+
+    return () => {
+      window.removeEventListener('click', unlock);
+      window.removeEventListener('touchstart', unlock);
+    };
+  }, [autoplayBlocked, playRemoteMedia]);
 
   return (
     <div className="flex-1 w-full p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-center justify-center min-h-[400px]">
       {/* Remote Participant Tile */}
-      <div className="relative w-full h-full min-h-[260px] sm:min-h-[360px] bg-[#1a1a1a] border border-[#3d3a39] rounded-xl overflow-hidden flex items-center justify-center shadow-lg">
-        {/* Persistently mounted remote video */}
+      <div
+        onClick={playRemoteMedia}
+        className="relative w-full h-full min-h-[260px] sm:min-h-[360px] bg-[#1a1a1a] border border-[#3d3a39] rounded-xl overflow-hidden flex items-center justify-center shadow-lg cursor-pointer"
+      >
+        {/* Persistently mounted remote video - NEVER use display:none so audio decodes continuously */}
         <video
           ref={remoteVideoRef}
           autoPlay
           playsInline
-          className={`w-full h-full object-cover ${
-            hasRemoteVideo ? 'block' : 'hidden'
+          className={`w-full h-full object-cover transition-opacity duration-200 ${
+            hasRemoteVideo ? 'opacity-100' : 'opacity-0 absolute pointer-events-none'
           }`}
         />
 
@@ -89,6 +122,21 @@ export function VideoGrid({
           </div>
         )}
 
+        {/* Mobile Autoplay Permission Prompt */}
+        {autoplayBlocked && (
+          <div className="absolute inset-x-4 top-4 z-20 flex justify-center">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                playRemoteMedia();
+              }}
+              className="px-3.5 py-1.5 bg-[#00d992] hover:bg-[#2fd6a1] text-[#101010] font-mono text-xs font-semibold rounded-md shadow-lg animate-pulse flex items-center gap-2 border border-[#10b981]"
+            >
+              <span>🔊</span> Tap to enable partner audio & video
+            </button>
+          </div>
+        )}
+
         {/* Remote Overlay Label */}
         <div className="absolute bottom-3 left-3 bg-[#101010]/80 backdrop-blur-md border border-[#3d3a39] px-3 py-1 rounded-md flex items-center gap-2">
           <span className="text-xs font-medium text-[#f2f2f2] capitalize">
@@ -105,8 +153,8 @@ export function VideoGrid({
           autoPlay
           playsInline
           muted
-          className={`w-full h-full object-cover scale-x-[-1] ${
-            !isCameraOff && localStream ? 'block' : 'hidden'
+          className={`w-full h-full object-cover scale-x-[-1] transition-opacity duration-200 ${
+            !isCameraOff && localStream ? 'opacity-100' : 'opacity-0 absolute pointer-events-none'
           }`}
         />
 

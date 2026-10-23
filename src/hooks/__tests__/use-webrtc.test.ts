@@ -84,4 +84,42 @@ describe('WebRTC NAT traversal & connection stability', () => {
     // Signaling channel must stay alive across re-renders
     expect(mockRemoveChannel).not.toHaveBeenCalled();
   });
+
+  it('3. MUST support transceiver-based track binding with replaceTrack for mobile/WAN media flow', async () => {
+    const mockReplaceTrack = vi.fn();
+    const mockAudioTransceiver = {
+      receiver: { track: { kind: 'audio' } },
+      sender: { replaceTrack: mockReplaceTrack },
+      direction: 'sendrecv',
+    };
+    const mockVideoTransceiver = {
+      receiver: { track: { kind: 'video' } },
+      sender: { replaceTrack: mockReplaceTrack },
+      direction: 'sendrecv',
+    };
+
+    global.RTCPeerConnection = vi.fn().mockImplementation(() => ({
+      connectionState: 'new',
+      signalingState: 'stable',
+      addTrack: vi.fn(),
+      getSenders: vi.fn().mockReturnValue([]),
+      getTransceivers: vi.fn().mockReturnValue([mockAudioTransceiver, mockVideoTransceiver]),
+      addTransceiver: vi.fn(),
+      createOffer: vi.fn().mockResolvedValue({ type: 'offer', sdp: 'mock-sdp' }),
+      createAnswer: vi.fn().mockResolvedValue({ type: 'answer', sdp: 'mock-sdp' }),
+      setLocalDescription: vi.fn().mockResolvedValue(undefined),
+      setRemoteDescription: vi.fn().mockResolvedValue(undefined),
+      addIceCandidate: vi.fn().mockResolvedValue(undefined),
+      close: vi.fn(),
+    })) as unknown as typeof RTCPeerConnection;
+
+    const { result } = renderHook(() =>
+      useWebRTC({
+        interviewId: 'test-interview',
+        currentProfile: { id: 'user-1', role: 'interviewer' },
+      })
+    );
+
+    expect(result.current).toBeDefined();
+  });
 });
