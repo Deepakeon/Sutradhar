@@ -1,16 +1,39 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { RealtimeChannel } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { RoomParticipant, SignalingPayload } from '@/types/interview';
 
-const ICE_SERVERS: RTCConfiguration = {
-  iceServers: [
-    { urls: 'stun:stun.l.google.com:19302' },
-    { urls: 'stun:stun1.l.google.com:19302' },
-  ],
-};
+export function getIceConfiguration(): RTCConfiguration {
+  const servers: RTCIceServer[] = [
+    { urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] },
+  ];
+
+  if (process.env.NEXT_PUBLIC_TURN_SERVER_URL) {
+    servers.push({
+      urls: process.env.NEXT_PUBLIC_TURN_SERVER_URL.split(',').map((u) => u.trim()),
+      username: process.env.NEXT_PUBLIC_TURN_USERNAME || undefined,
+      credential: process.env.NEXT_PUBLIC_TURN_CREDENTIAL || undefined,
+    });
+  } else {
+    // Default TURN relay servers for WAN NAT traversal across symmetric NAT & CGNAT
+    servers.push({
+      urls: [
+        'turn:openrelay.metered.ca:80',
+        'turn:openrelay.metered.ca:443',
+        'turns:openrelay.metered.ca:443',
+      ],
+      username: 'openrelay',
+      credential: 'openrelay',
+    });
+  }
+
+  return {
+    iceServers: servers,
+    iceCandidatePoolSize: 10,
+  };
+}
 
 interface UseWebRTCOptions {
   interviewId: string;
@@ -37,7 +60,7 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
   const currentProfileRef = useRef(currentProfile);
   const localStreamRef = useRef<MediaStream | null>(null);
   const onCallEndedRef = useRef(onCallEnded);
-  const supabase = createClient();
+  const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
     currentProfileRef.current = currentProfile;
@@ -129,8 +152,17 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
   const getOrCreatePC = useCallback(() => {
     if (pcRef.current) return pcRef.current;
 
-    const pc = new RTCPeerConnection(ICE_SERVERS);
+    const pc = new RTCPeerConnection(getIceConfiguration());
     pcRef.current = pc;
+
+    if (typeof pc.addTransceiver === 'function') {
+      try {
+        pc.addTransceiver('audio', { direction: 'sendrecv' });
+        pc.addTransceiver('video', { direction: 'sendrecv' });
+      } catch {
+        // Fallback if not supported in mock/environment
+      }
+    }
 
     pc.onconnectionstatechange = () => {
       setConnectionState(pc.connectionState);
@@ -238,7 +270,13 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
         // Process queued ICE candidates
         while (iceCandidateQueue.current.length > 0) {
           const candidate = iceCandidateQueue.current.shift();
-          if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+          if (candidate) {
+            try {
+              await pc.addIceCandidate(new RTCIceCandidate(candidate));
+            } catch (err: unknown) {
+              console.warn('Could not add queued ICE candidate:', err);
+            }
+          }
         }
 
         const answer = await pc.createAnswer();
@@ -260,13 +298,23 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
           await pc.setRemoteDescription(new RTCSessionDescription(payload.sdp!));
           while (iceCandidateQueue.current.length > 0) {
             const candidate = iceCandidateQueue.current.shift();
-            if (candidate) await pc.addIceCandidate(new RTCIceCandidate(candidate));
+            if (candidate) {
+              try {
+                await pc.addIceCandidate(new RTCIceCandidate(candidate));
+              } catch (err: unknown) {
+                console.warn('Could not add queued ICE candidate:', err);
+              }
+            }
           }
         }
       } else if (payload.type === 'ice-candidate') {
         if (payload.candidate) {
           if (pc.remoteDescription && pc.remoteDescription.type) {
-            await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
+            try {
+              await pc.addIceCandidate(new RTCIceCandidate(payload.candidate));
+            } catch (err: unknown) {
+              console.warn('Could not add ICE candidate:', err);
+            }
           } else {
             iceCandidateQueue.current.push(payload.candidate);
           }
@@ -279,9 +327,9 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
     channel.subscribe(async (status) => {
       if (status === 'SUBSCRIBED') {
         await channel.track({
-          id: currentProfile.id,
-          role: currentProfile.role,
-          name: currentProfile.name || currentProfile.role,
+          id: currentProfileRef.current.id,
+          role: currentProfileRef.current.role,
+          name: currentProfileRef.current.name || currentProfileRef.current.role,
           joinedAt: new Date().toISOString(),
         });
       }
@@ -298,8 +346,6 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
   }, [
     interviewId,
     currentProfile.id,
-    currentProfile.role,
-    currentProfile.name,
     getOrCreatePC,
     attachTracksInOrder,
     supabase,
