@@ -147,26 +147,8 @@ isOneToOne: false
             [_ in never]: never
           }
           Functions: {
-            "create_interview":
-{ Args: { "candidate_id": string,"compatibility_score"?: number,"format"?: string,"interviewer_id": string,"meeting_url"?: string,"notes"?: string,"scheduled_at"?: string,"title"?: string,"transcript"?: string }; Returns: Json
-                           },
-"get_my_profile":
+            "get_my_profile":
 { Args: Record<PropertyKey, never>; Returns: Json
-                           },
-"get_profile":
-{ Args: { "target_profile_id"?: string }; Returns: Json
-                           },
-"launch_meeting_room":
-{ Args: { "interview_id": string }; Returns: Json
-                           },
-"update_interview_status":
-{ Args: { "interview_id": string,"notes"?: string,"status": string }; Returns: Json
-                           },
-"update_profile":
-{ Args: { "availability"?: Json,"headline"?: string,"objective"?: string,"roles"?: string,"skills"?: Json }; Returns: Json
-                           },
-"update_status":
-{ Args: { "interview_id": string,"notes"?: string,"status": string }; Returns: Json
                            }
           }
           Enums: {
