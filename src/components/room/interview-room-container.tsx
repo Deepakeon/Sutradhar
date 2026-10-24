@@ -110,7 +110,7 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
     },
   });
 
-  // Hook 2: Audio Mixing & Rolling Cloudinary Ingestion
+  // Hook 2: Dual-Party 10s Cloudinary Audio Ingestion
   const {
     isRecording,
     recordingDuration,
@@ -122,6 +122,7 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
     remoteStream,
     isCallActive: connectionState === 'connected',
     role: currentProfile?.role || 'candidate',
+    sessionStartedAt: interview?.session_started_at,
   });
 
   // Handle Call Wrap-up & Finalization

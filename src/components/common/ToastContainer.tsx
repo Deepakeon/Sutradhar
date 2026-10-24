@@ -14,6 +14,7 @@ export function ToastContainer() {
         const isSuccess = toast.type === 'success';
         const isInfo = toast.type === 'info';
         const isWarning = toast.type === 'warning';
+        const isError = toast.type === 'error';
 
         return (
           <div
@@ -22,12 +23,15 @@ export function ToastContainer() {
           >
             <div className="flex items-center gap-3">
               <span
-                className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${isSuccess
+                className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${
+                  isSuccess
                     ? 'bg-[#00d992]'
                     : isInfo
                       ? 'bg-[#2fd6a1]'
-                      : 'bg-amber-400'
-                  }`}
+                      : isWarning
+                        ? 'bg-amber-400'
+                        : 'bg-[#ff4d4f]'
+                }`}
               />
               <p className="text-sm text-[#f2f2f2] leading-snug">{toast.message}</p>
             </div>

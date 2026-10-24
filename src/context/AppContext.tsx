@@ -21,7 +21,7 @@ import {
 interface ToastInfo {
   id: string;
   message: string;
-  type?: 'success' | 'info' | 'warning';
+  type?: 'success' | 'info' | 'warning' | 'error';
 }
 
 interface AppContextType {

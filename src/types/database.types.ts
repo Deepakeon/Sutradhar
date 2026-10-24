@@ -3,18 +3,36 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 
 export type Database = {
   
-  "private": {
+  "graphql_public": {
+          Tables: {
+            [_ in never]: never
+          }
+          Views: {
+            [_ in never]: never
+          }
+          Functions: {
+            "graphql":
+{ Args: { "extensions"?: Json,"operationName"?: string,"query"?: string,"variables"?: Json }; Returns: Json
+                           }
+          }
+          Enums: {
+            [_ in never]: never
+          }
+          CompositeTypes: {
+            [_ in never]: never
+          }
+        },"private": {
           Tables: {
             "interview_chunks": {
                   Row: {
-                    "chunk_index": number,"cloudinary_public_id": string,"cloudinary_url": string,"created_at": string,"duration_seconds": number,"id": string,"interview_id": string,"transcribed_at": string | null,"transcript": string | null
+                    "chunk_index": number,"cloudinary_public_id": string,"cloudinary_url": string,"created_at": string,"duration_seconds": number,"end_offset_ms": number | null,"id": string,"interview_id": string,"profile_id": string | null,"role": string | null,"start_offset_ms": number,"transcribed_at": string | null,"transcript": string | null
                   }
                   ComputedFields: never
                   Insert: {
-                    "chunk_index": number,"cloudinary_public_id": string,"cloudinary_url": string,"created_at"?: string,"duration_seconds"?: number,"id"?: string,"interview_id": string,"transcribed_at"?: string | null,"transcript"?: string | null
+                    "chunk_index": number,"cloudinary_public_id": string,"cloudinary_url": string,"created_at"?: string,"duration_seconds"?: number,"end_offset_ms"?: number | null,"id"?: string,"interview_id": string,"profile_id"?: string | null,"role"?: string | null,"start_offset_ms"?: number,"transcribed_at"?: string | null,"transcript"?: string | null
                   }
                   Update: {
-                    "chunk_index"?: number,"cloudinary_public_id"?: string,"cloudinary_url"?: string,"created_at"?: string,"duration_seconds"?: number,"id"?: string,"interview_id"?: string,"transcribed_at"?: string | null,"transcript"?: string | null
+                    "chunk_index"?: number,"cloudinary_public_id"?: string,"cloudinary_url"?: string,"created_at"?: string,"duration_seconds"?: number,"end_offset_ms"?: number | null,"id"?: string,"interview_id"?: string,"profile_id"?: string | null,"role"?: string | null,"start_offset_ms"?: number,"transcribed_at"?: string | null,"transcript"?: string | null
                   }
                   Relationships: [
                     {
@@ -23,18 +41,24 @@ export type Database = {
 isOneToOne: false
       referencedRelation: "interviews"
       referencedColumns: ["id"]
+    },{
+      foreignKeyName: "interview_chunks_profile_id_fkey"
+      columns: ["profile_id"]
+isOneToOne: false
+      referencedRelation: "profiles"
+      referencedColumns: ["id"]
     }
                   ]
                 },"interviews": {
                   Row: {
-                    "candidate_id": string,"compatibility_score": number | null,"created_at": string,"duration_seconds": number,"format": string,"id": string,"interviewer_id": string,"master_recording_url": string | null,"meeting_url": string | null,"notes": string | null,"scheduled_at": string,"status": Database["private"]['Enums']["interview_status"],"title": string,"total_chunks": number,"transcript": string | null,"updated_at": string
+                    "candidate_id": string,"compatibility_score": number | null,"created_at": string,"duration_seconds": number,"format": string,"id": string,"interviewer_id": string,"master_recording_url": string | null,"master_transcript": Json | null,"meeting_url": string | null,"notes": string | null,"scheduled_at": string,"session_started_at": string | null,"status": Database["private"]['Enums']["interview_status"],"title": string,"total_chunks": number,"transcript": string | null,"updated_at": string
                   }
                   ComputedFields: never
                   Insert: {
-                    "candidate_id": string,"compatibility_score"?: number | null,"created_at"?: string,"duration_seconds"?: number,"format"?: string,"id"?: string,"interviewer_id": string,"master_recording_url"?: string | null,"meeting_url"?: string | null,"notes"?: string | null,"scheduled_at"?: string,"status"?: Database["private"]['Enums']["interview_status"],"title"?: string,"total_chunks"?: number,"transcript"?: string | null,"updated_at"?: string
+                    "candidate_id": string,"compatibility_score"?: number | null,"created_at"?: string,"duration_seconds"?: number,"format"?: string,"id"?: string,"interviewer_id": string,"master_recording_url"?: string | null,"master_transcript"?: Json | null,"meeting_url"?: string | null,"notes"?: string | null,"scheduled_at"?: string,"session_started_at"?: string | null,"status"?: Database["private"]['Enums']["interview_status"],"title"?: string,"total_chunks"?: number,"transcript"?: string | null,"updated_at"?: string
                   }
                   Update: {
-                    "candidate_id"?: string,"compatibility_score"?: number | null,"created_at"?: string,"duration_seconds"?: number,"format"?: string,"id"?: string,"interviewer_id"?: string,"master_recording_url"?: string | null,"meeting_url"?: string | null,"notes"?: string | null,"scheduled_at"?: string,"status"?: Database["private"]['Enums']["interview_status"],"title"?: string,"total_chunks"?: number,"transcript"?: string | null,"updated_at"?: string
+                    "candidate_id"?: string,"compatibility_score"?: number | null,"created_at"?: string,"duration_seconds"?: number,"format"?: string,"id"?: string,"interviewer_id"?: string,"master_recording_url"?: string | null,"master_transcript"?: Json | null,"meeting_url"?: string | null,"notes"?: string | null,"scheduled_at"?: string,"session_started_at"?: string | null,"status"?: Database["private"]['Enums']["interview_status"],"title"?: string,"total_chunks"?: number,"transcript"?: string | null,"updated_at"?: string
                   }
                   Relationships: [
                     {
@@ -266,7 +290,11 @@ export type CompositeTypes<
   : never
 
 export const Constants = {
-  "private": {
+  "graphql_public": {
+          Enums: {
+            
+          }
+        },"private": {
           Enums: {
             "interview_status": ["pending", "accepted", "declined", "revoked", "completed", "cancelled"]
           }
