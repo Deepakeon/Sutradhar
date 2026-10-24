@@ -25,3 +25,17 @@ export interface SignalingPayload {
   candidate?: RTCIceCandidateInit;
   timestamp: number;
 }
+
+export interface ChunkUploadMetadata {
+  interviewId: string;
+  profileId: string;
+  role: 'candidate' | 'interviewer';
+  chunkIndex: number;
+  startOffsetMs: number;
+  endOffsetMs?: number;
+}
+
+export interface ChunkUploadResponse {
+  success: boolean;
+  chunk: InterviewChunkRow;
+}

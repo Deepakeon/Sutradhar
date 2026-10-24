@@ -14,9 +14,12 @@ Default vocabulary (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-
 
 Single-context (`CONTEXT.md` + `docs/adr/`). See `docs/agents/domain.md`.
 
-## Database Schema Architecture
+## Database Schema Architecture & Migrations
 
-All Postgres tables in this application must be created in the `private` schema (e.g. `private.profiles`, `private.interviews`, `private.interview_chunks`), NOT `public`.
+- **Private Schema**: All Postgres tables in this application must be created in the `private` schema (e.g. `private.profiles`, `private.interviews`, `private.interview_chunks`), NOT `public`.
+- **Migrations**: All required changes to the Supabase DB must be applied through migration files located in `supabase/migrations/` and executed against the database environment.
+- **Logical Separation**: Migration files must be logically separated by domain/feature seam so that there is no single large migration file.
+- **Initial State Seeders**: All data required for the zero/initial state of the application (e.g. reference lookup values, default skills, proficiency levels) must be added to seeders (`supabase/seed.sql`) and kept synchronized.
 
 ## Design System
 

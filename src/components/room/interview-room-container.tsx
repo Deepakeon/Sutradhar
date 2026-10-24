@@ -75,6 +75,32 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
           name: user.user_metadata?.full_name || role,
         });
 
+        // Anchor session_started_at in private.interviews if this is the first participant entering
+        if (!interviewData.session_started_at) {
+          const nowIso = new Date().toISOString();
+          try {
+            const { data: updatedInterview } = await supabase
+              .schema('private')
+              .from('interviews')
+              .update({
+                session_started_at: nowIso,
+                updated_at: nowIso,
+              })
+              .eq('id', interviewId)
+              .is('session_started_at', null)
+              .select()
+              .single();
+
+            if (updatedInterview?.session_started_at) {
+              interviewData.session_started_at = updatedInterview.session_started_at;
+            } else {
+              interviewData.session_started_at = nowIso;
+            }
+          } catch {
+            interviewData.session_started_at = nowIso;
+          }
+        }
+
         setInterview(interviewData);
         setLoading(false);
       } catch (err: unknown) {
@@ -87,6 +113,40 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
     loadSession();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [interviewId]);
+
+  // Subscribe to changes on interview session (e.g. session_started_at synchronization)
+  useEffect(() => {
+    if (!interviewId) return;
+
+    const channel = supabase
+      .channel(`interview-session:${interviewId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'private',
+          table: 'interviews',
+          filter: `id=eq.${interviewId}`,
+        },
+        (payload) => {
+          if (payload.new && (payload.new as InterviewRow).session_started_at) {
+            setInterview((prev) =>
+              prev
+                ? {
+                    ...prev,
+                    session_started_at: (payload.new as InterviewRow).session_started_at,
+                  }
+                : (payload.new as InterviewRow)
+            );
+          }
+        }
+      )
+      .subscribe((_status) => {});
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [interviewId, supabase]);
 
   // Hook 1: WebRTC Real-Time Calling
   const {
@@ -110,7 +170,10 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
     },
   });
 
-  // Hook 2: Audio Mixing & Rolling Cloudinary Ingestion
+  // Streaming begins as soon as this user is present in the room with microphone stream available
+  const isRoomActive = !callEndedState.ended && Boolean(currentProfile) && Boolean(localStream);
+
+  // Hook 2: Dual-Party 10s Cloudinary Audio Ingestion
   const {
     isRecording,
     recordingDuration,
@@ -118,10 +181,11 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
     finalizeRecording,
   } = useAudioStreamer({
     interviewId,
+    profileId: currentProfile?.id,
     localStream,
-    remoteStream,
-    isCallActive: connectionState === 'connected',
+    isCallActive: isRoomActive,
     role: currentProfile?.role || 'candidate',
+    sessionStartedAt: interview?.session_started_at,
   });
 
   // Handle Call Wrap-up & Finalization

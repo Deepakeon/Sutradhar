@@ -264,7 +264,7 @@ export default function ProfilePage() {
   const handleCreateJD = (e: React.FormEvent) => {
     e.preventDefault();
     if (!jdRoleTitle.trim()) {
-      showToast('Please specify a role title for the Job Description', 'error');
+      showToast('Please specify a role title for the Job Description', 'warning');
       return;
     }
     const newJD: JobDescription = {
