@@ -13,7 +13,6 @@ ALTER TABLE private.interviews
 -- 3. Update private.interview_chunks table for dual-party support and time anchoring
 ALTER TABLE private.interview_chunks
   ADD COLUMN IF NOT EXISTS profile_id UUID REFERENCES private.profiles(id) ON DELETE CASCADE,
-  ADD COLUMN IF NOT EXISTS role TEXT CHECK (role IN ('candidate', 'interviewer')),
   ADD COLUMN IF NOT EXISTS start_offset_ms BIGINT NOT NULL DEFAULT 0,
   ADD COLUMN IF NOT EXISTS end_offset_ms BIGINT,
   ALTER COLUMN duration_seconds SET DEFAULT 10;

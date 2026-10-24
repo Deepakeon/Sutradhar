@@ -9,7 +9,7 @@ cloudinary.config({
 });
 
 export interface UploadChunkParams {
-  buffer: Buffer;
+  buffer: Buffer<any>;
   interviewId: string;
   role: 'candidate' | 'interviewer';
   chunkIndex: number;

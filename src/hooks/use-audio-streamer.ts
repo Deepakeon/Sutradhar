@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { isWebMHeader, findWebMClusterIndex } from '@/lib/audio/webm-header';
 import type { ChunkUploadMetadata } from '@/types/interview';
 
 export interface UseAudioStreamerOptions {
@@ -32,6 +33,10 @@ export function useAudioStreamer({
   const chunkIndexRef = useRef<number>(0);
   const sessionStartedAtMsRef = useRef<number>(Date.now());
   const lastSliceStartMsRef = useRef<number>(Date.now());
+  const webmHeaderBlobRef = useRef<Blob | null>(null);
+  const profileIdRef = useRef(profileId);
+  const roleRef = useRef(role);
+  const sessionStartedAtRef = useRef(sessionStartedAt);
   const supabase = useMemo(() => createClient(), []);
 
   // Safe helper to stop recorder
@@ -46,8 +51,18 @@ export function useAudioStreamer({
     mediaRecorderRef.current = null;
   }, []);
 
+  // Keep prop references synchronized
+  useEffect(() => {
+    profileIdRef.current = profileId;
+  }, [profileId]);
+
+  useEffect(() => {
+    roleRef.current = role;
+  }, [role]);
+
   // Sync sessionStartedAt reference timestamp
   useEffect(() => {
+    sessionStartedAtRef.current = sessionStartedAt;
     if (sessionStartedAt) {
       const parsedMs = new Date(sessionStartedAt).getTime();
       if (!isNaN(parsedMs)) {
@@ -55,6 +70,13 @@ export function useAudioStreamer({
       }
     }
   }, [sessionStartedAt]);
+
+  // Reset chunk counter when room session ceases
+  useEffect(() => {
+    if (!isCallActive) {
+      chunkIndexRef.current = 0;
+    }
+  }, [isCallActive]);
 
   // Manage recording timer when call is active
   useEffect(() => {
@@ -147,13 +169,12 @@ export function useAudioStreamer({
         ? new MediaStream(audioTracks)
         : (localStream as any);
 
-    // Reset chunk counter and session start timer anchor on call connect
-    chunkIndexRef.current = 0;
+    // Start slice timer anchored to this stream's start time
     const now = Date.now();
-    if (!sessionStartedAt) {
+    if (!sessionStartedAtRef.current) {
       sessionStartedAtMsRef.current = now;
     }
-    lastSliceStartMsRef.current = sessionStartedAtMsRef.current;
+    lastSliceStartMsRef.current = now;
 
     // Determine Opus codec support
     let mimeType = 'audio/webm;codecs=opus';
@@ -173,8 +194,34 @@ export function useAudioStreamer({
       );
       mediaRecorderRef.current = recorder;
 
-      recorder.ondataavailable = (event: BlobEvent) => {
+      recorder.ondataavailable = async (event: BlobEvent) => {
         if (event.data && event.data.size > 0) {
+          const rawBlob = event.data;
+          let blobToUpload = rawBlob;
+
+          try {
+            if (typeof rawBlob.arrayBuffer === 'function') {
+              const headSlice = rawBlob.slice(0, 16);
+              const headBuf = await headSlice.arrayBuffer();
+              const headBytes = new Uint8Array(headBuf);
+
+              if (isWebMHeader(headBytes)) {
+                const fullBuf = await rawBlob.arrayBuffer();
+                const fullBytes = new Uint8Array(fullBuf);
+                const clusterIdx = findWebMClusterIndex(fullBytes);
+                if (clusterIdx > 0) {
+                  webmHeaderBlobRef.current = rawBlob.slice(0, clusterIdx, rawBlob.type);
+                }
+              } else if (webmHeaderBlobRef.current) {
+                blobToUpload = new Blob([webmHeaderBlobRef.current, rawBlob], {
+                  type: rawBlob.type || 'audio/webm;codecs=opus',
+                });
+              }
+            }
+          } catch (e) {
+            console.warn('WebM header processing notice:', e);
+          }
+
           const currentChunkIndex = chunkIndexRef.current++;
           const sliceNow = Date.now();
           // Accurate monotonic start offset from slice progression
@@ -184,14 +231,14 @@ export function useAudioStreamer({
 
           const metadata: ChunkUploadMetadata = {
             interviewId,
-            profileId: profileId || '',
-            role,
+            profileId: profileIdRef.current || profileId || '',
+            role: roleRef.current || role,
             chunkIndex: currentChunkIndex,
             startOffsetMs,
             endOffsetMs,
           };
 
-          uploadChunkWithRetry(event.data, metadata);
+          uploadChunkWithRetry(blobToUpload, metadata);
         }
       };
 
@@ -205,7 +252,7 @@ export function useAudioStreamer({
     return () => {
       stopMediaRecorder();
     };
-  }, [interviewId, isCallActive, localStream, profileId, role, sessionStartedAt, stopMediaRecorder, uploadChunkWithRetry]);
+  }, [interviewId, isCallActive, localStream, profileId, role, stopMediaRecorder, uploadChunkWithRetry]);
 
   // Finalize interview session directly in Supabase
   const finalizeRecording = useCallback(async (): Promise<string | null> => {

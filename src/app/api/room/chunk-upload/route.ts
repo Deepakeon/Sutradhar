@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { uploadAudioChunk } from '@/lib/cloudinary';
+import { isWebMHeader, extractWebMHeader, ensureWebMHeader } from '@/lib/audio/webm-header';
 import type { ChunkUploadResponse } from '@/types/interview';
+
+// In-memory cache for initialization headers (EBML/Track metadata) per stream
+const streamHeaderCache = new Map<string, Buffer>();
 
 export async function POST(req: Request | NextRequest) {
   try {
@@ -94,7 +98,18 @@ export async function POST(req: Request | NextRequest) {
 
     // Convert audio Blob/File to Buffer
     const arrayBuffer = await audioFile.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    let buffer = Buffer.from(arrayBuffer);
+
+    // Ensure WebM container header is present for standalone Cloudinary / FFmpeg ingestion
+    const cacheKey = `${interviewId}:${role}`;
+    if (isWebMHeader(buffer)) {
+      const extractedHeader = extractWebMHeader(buffer);
+      if (extractedHeader) {
+        streamHeaderCache.set(cacheKey, extractedHeader);
+      }
+    } else {
+      buffer = ensureWebMHeader(buffer, streamHeaderCache.get(cacheKey));
+    }
 
     // Stream buffer directly to Cloudinary
     const uploadResult = await uploadAudioChunk({
@@ -118,7 +133,6 @@ export async function POST(req: Request | NextRequest) {
         {
           interview_id: interviewId,
           profile_id: user.id,
-          role,
           chunk_index: chunkIndex,
           cloudinary_public_id: uploadResult.public_id,
           cloudinary_url: uploadResult.secure_url,

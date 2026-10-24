@@ -53,7 +53,6 @@ describe('POST /api/room/chunk-upload', () => {
                     id: 'chunk-uuid-1',
                     interview_id: 'interview-123',
                     profile_id: 'user-cand-123',
-                    role: 'candidate',
                     chunk_index: 0,
                     cloudinary_public_id: 'sutradhar/interviews/interview-123/candidate/chunk_0_0',
                     cloudinary_url: 'https://cloudinary.com/chunk_0_0.webm',
@@ -191,5 +190,42 @@ describe('POST /api/room/chunk-upload', () => {
 
     // Verify Supabase schema private was queried
     expect(mockSupabase.schema).toHaveBeenCalledWith('private');
+  });
+
+  it('extracts and prepends cached WebM container header for headerless continuation chunks', async () => {
+    // 1. Send chunk 0 with EBML header + cluster
+    const ebmlHeader = [0x1a, 0x45, 0xdf, 0xa3, 0x01, 0x02];
+    const clusterHeader = [0x1f, 0x43, 0xb6, 0x75, 0x03, 0x04];
+    const chunk0Bytes = new Uint8Array([...ebmlHeader, ...clusterHeader]);
+
+    const form0 = new FormData();
+    form0.append('audio', new Blob([chunk0Bytes]), 'chunk_0.webm');
+    form0.append('interview_id', 'interview-123');
+    form0.append('role', 'candidate');
+    form0.append('chunk_index', '0');
+    form0.append('start_offset_ms', '0');
+    form0.append('end_offset_ms', '10000');
+
+    await POST(new Request('http://localhost:3000/api/room/chunk-upload', { method: 'POST', body: form0 }));
+
+    // 2. Send chunk 1 with cluster data only (no EBML header)
+    const chunk1Bytes = new Uint8Array([...clusterHeader, 0xaa, 0xbb]);
+    const form1 = new FormData();
+    form1.append('audio', new Blob([chunk1Bytes]), 'chunk_1.webm');
+    form1.append('interview_id', 'interview-123');
+    form1.append('role', 'candidate');
+    form1.append('chunk_index', '1');
+    form1.append('start_offset_ms', '10000');
+    form1.append('end_offset_ms', '20000');
+
+    await POST(new Request('http://localhost:3000/api/room/chunk-upload', { method: 'POST', body: form1 }));
+
+    // Verify Cloudinary was called for chunk 1 with header prepended
+    const secondCall = vi.mocked(uploadAudioChunk).mock.calls[1][0];
+    expect(secondCall.chunkIndex).toBe(1);
+    expect(secondCall.buffer[0]).toBe(0x1a);
+    expect(secondCall.buffer[1]).toBe(0x45);
+    expect(secondCall.buffer[2]).toBe(0xdf);
+    expect(secondCall.buffer[3]).toBe(0xa3);
   });
 });

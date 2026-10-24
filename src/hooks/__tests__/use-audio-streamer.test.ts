@@ -224,4 +224,48 @@ describe('useAudioStreamer', () => {
 
     expect(recorder.stop).toHaveBeenCalled();
   });
+
+  it('anchors start offset accurately when user enters room after session start', async () => {
+    const mockFetch = vi.fn().mockResolvedValue({
+      ok: true,
+      status: 201,
+      json: async () => ({ success: true }),
+    });
+    vi.stubGlobal('fetch', mockFetch);
+
+    // Mock system time to simulate joining 60 seconds after session started
+    const baseTime = 1700000000000;
+    const sessionStartTime = new Date(baseTime).toISOString();
+    vi.setSystemTime(baseTime + 60000);
+
+    const { result } = renderHook(() =>
+      useAudioStreamer({
+        interviewId: 'interview-123',
+        profileId: 'interviewer-456',
+        localStream: mockLocalStream,
+        isCallActive: true,
+        role: 'interviewer',
+        sessionStartedAt: sessionStartTime,
+      })
+    );
+
+    const recorder = mockMediaRecorderInstances[0];
+    const mockBlob = new Blob(['audio-bytes'], { type: 'audio/webm;codecs=opus' });
+
+    // Advance 10 seconds for first slice
+    vi.setSystemTime(baseTime + 70000);
+
+    await act(async () => {
+      recorder.ondataavailable({ data: mockBlob });
+    });
+
+    expect(mockFetch).toHaveBeenCalledTimes(1);
+    const [, options] = mockFetch.mock.calls[0];
+    const formData = options.body as FormData;
+
+    expect(formData.get('chunk_index')).toBe('0');
+    expect(formData.get('start_offset_ms')).toBe('60000');
+    expect(formData.get('end_offset_ms')).toBe('70000');
+    expect(result.current.uploadedChunksCount).toBe(1);
+  });
 });
