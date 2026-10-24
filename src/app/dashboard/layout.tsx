@@ -1,5 +1,6 @@
 import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
+import { connection } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import type { Profile } from '@/types/profile';
 import { DashboardLayoutShell } from './dashboard-shell';
@@ -10,6 +11,7 @@ export const metadata = {
 };
 
 async function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
+  await connection();
   const supabase = await createClient();
   const {
     data: { user },
