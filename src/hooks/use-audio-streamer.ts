@@ -2,11 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import type { ChunkUploadMetadata } from '@/types/interview';
 
 export interface UseAudioStreamerOptions {
   interviewId: string;
+  profileId?: string;
   localStream: MediaStream | null;
-  remoteStream?: MediaStream | null; // Kept for backwards compatibility; strictly ignored to isolate local mic
   isCallActive: boolean;
   role: 'candidate' | 'interviewer';
   sessionStartedAt?: string | null;
@@ -14,6 +15,7 @@ export interface UseAudioStreamerOptions {
 
 export function useAudioStreamer({
   interviewId,
+  profileId,
   localStream,
   isCallActive,
   role,
@@ -29,12 +31,28 @@ export function useAudioStreamer({
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunkIndexRef = useRef<number>(0);
   const sessionStartedAtMsRef = useRef<number>(Date.now());
+  const lastSliceStartMsRef = useRef<number>(Date.now());
   const supabase = useMemo(() => createClient(), []);
+
+  // Safe helper to stop recorder
+  const stopMediaRecorder = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
+      try {
+        mediaRecorderRef.current.stop();
+      } catch {
+        // Ignore if already inactive
+      }
+    }
+    mediaRecorderRef.current = null;
+  }, []);
 
   // Sync sessionStartedAt reference timestamp
   useEffect(() => {
     if (sessionStartedAt) {
-      sessionStartedAtMsRef.current = new Date(sessionStartedAt).getTime();
+      const parsedMs = new Date(sessionStartedAt).getTime();
+      if (!isNaN(parsedMs)) {
+        sessionStartedAtMsRef.current = parsedMs;
+      }
     }
   }, [sessionStartedAt]);
 
@@ -64,19 +82,20 @@ export function useAudioStreamer({
   const uploadChunkWithRetry = useCallback(
     async (
       blob: Blob,
-      chunkIndex: number,
-      startOffsetMs: number,
-      endOffsetMs: number,
+      metadata: ChunkUploadMetadata,
       attempt = 1
     ): Promise<void> => {
       setIsUploading(true);
       const formData = new FormData();
-      formData.append('audio', blob, `chunk_${chunkIndex}.webm`);
-      formData.append('interview_id', interviewId);
-      formData.append('role', role);
-      formData.append('chunk_index', String(chunkIndex));
-      formData.append('start_offset_ms', String(startOffsetMs));
-      formData.append('end_offset_ms', String(endOffsetMs));
+      formData.append('audio', blob, `chunk_${metadata.chunkIndex}.webm`);
+      formData.append('interview_id', metadata.interviewId);
+      formData.append('role', metadata.role);
+      if (metadata.profileId) {
+        formData.append('profile_id', metadata.profileId);
+      }
+      formData.append('chunk_index', String(metadata.chunkIndex));
+      formData.append('start_offset_ms', String(metadata.startOffsetMs));
+      formData.append('end_offset_ms', String(metadata.endOffsetMs ?? metadata.startOffsetMs + 10000));
 
       try {
         const response = await fetch('/api/room/chunk-upload', {
@@ -95,32 +114,25 @@ export function useAudioStreamer({
         if (attempt < maxRetries) {
           const backoffDelay = Math.min(1000 * Math.pow(2, attempt - 1), 8000);
           setTimeout(() => {
-            uploadChunkWithRetry(blob, chunkIndex, startOffsetMs, endOffsetMs, attempt + 1);
+            uploadChunkWithRetry(blob, metadata, attempt + 1);
           }, backoffDelay);
         } else {
           const message =
             err instanceof Error ? err.message : 'Audio chunk upload failed after retries';
           setError(message);
-          console.error(`Audio chunk ${chunkIndex} upload error:`, err);
+          console.error(`Audio chunk ${metadata.chunkIndex} upload error:`, err);
         }
       } finally {
         setIsUploading(false);
       }
     },
-    [interviewId, role]
+    []
   );
 
   // Initialize and tear down MediaRecorder on isolated local microphone stream
   useEffect(() => {
     if (!isCallActive || !localStream) {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        try {
-          mediaRecorderRef.current.stop();
-        } catch {
-          // Ignore if already closed
-        }
-      }
-      mediaRecorderRef.current = null;
+      stopMediaRecorder();
       return;
     }
 
@@ -137,9 +149,11 @@ export function useAudioStreamer({
 
     // Reset chunk counter and session start timer anchor on call connect
     chunkIndexRef.current = 0;
+    const now = Date.now();
     if (!sessionStartedAt) {
-      sessionStartedAtMsRef.current = Date.now();
+      sessionStartedAtMsRef.current = now;
     }
+    lastSliceStartMsRef.current = sessionStartedAtMsRef.current;
 
     // Determine Opus codec support
     let mimeType = 'audio/webm;codecs=opus';
@@ -162,17 +176,22 @@ export function useAudioStreamer({
       recorder.ondataavailable = (event: BlobEvent) => {
         if (event.data && event.data.size > 0) {
           const currentChunkIndex = chunkIndexRef.current++;
-          const now = Date.now();
-          // Millisecond offset measured against shared session start
-          const startOffsetMs = Math.max(0, now - sessionStartedAtMsRef.current - 10000);
-          const endOffsetMs = Math.max(startOffsetMs + 10000, now - sessionStartedAtMsRef.current);
+          const sliceNow = Date.now();
+          // Accurate monotonic start offset from slice progression
+          const startOffsetMs = Math.max(0, lastSliceStartMsRef.current - sessionStartedAtMsRef.current);
+          const endOffsetMs = Math.max(startOffsetMs, sliceNow - sessionStartedAtMsRef.current);
+          lastSliceStartMsRef.current = sliceNow;
 
-          uploadChunkWithRetry(
-            event.data,
-            currentChunkIndex,
+          const metadata: ChunkUploadMetadata = {
+            interviewId,
+            profileId: profileId || '',
+            role,
+            chunkIndex: currentChunkIndex,
             startOffsetMs,
-            endOffsetMs
-          );
+            endOffsetMs,
+          };
+
+          uploadChunkWithRetry(event.data, metadata);
         }
       };
 
@@ -184,27 +203,14 @@ export function useAudioStreamer({
     }
 
     return () => {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        try {
-          mediaRecorderRef.current.stop();
-        } catch {
-          // Ignore if already stopped
-        }
-      }
-      mediaRecorderRef.current = null;
+      stopMediaRecorder();
     };
-  }, [isCallActive, localStream, sessionStartedAt, uploadChunkWithRetry]);
+  }, [interviewId, isCallActive, localStream, profileId, role, sessionStartedAt, stopMediaRecorder, uploadChunkWithRetry]);
 
   // Finalize interview session directly in Supabase
   const finalizeRecording = useCallback(async (): Promise<string | null> => {
     try {
-      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== 'inactive') {
-        try {
-          mediaRecorderRef.current.stop();
-        } catch {
-          // Ignore
-        }
-      }
+      stopMediaRecorder();
 
       await supabase
         .schema('private')
@@ -220,7 +226,7 @@ export function useAudioStreamer({
       console.error('Finalize recording error:', err);
       return null;
     }
-  }, [interviewId, supabase]);
+  }, [interviewId, stopMediaRecorder, supabase]);
 
   return {
     isRecording,

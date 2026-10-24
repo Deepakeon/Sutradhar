@@ -43,6 +43,9 @@ describe('POST /api/room/chunk-upload', () => {
         }
         if (table === 'interview_chunks') {
           return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockResolvedValue({ count: 1 }),
+            }),
             upsert: vi.fn().mockReturnValue({
               select: vi.fn().mockReturnValue({
                 single: vi.fn().mockResolvedValue({

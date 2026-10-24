@@ -92,7 +92,6 @@ describe('useAudioStreamer', () => {
       useAudioStreamer({
         interviewId: 'interview-123',
         localStream: mockLocalStream,
-        remoteStream: mockRemoteStream,
         isCallActive: false,
         role: 'candidate',
       })
@@ -107,7 +106,6 @@ describe('useAudioStreamer', () => {
       useAudioStreamer({
         interviewId: 'interview-123',
         localStream: mockLocalStream,
-        remoteStream: mockRemoteStream,
         isCallActive: true,
         role: 'candidate',
       })
@@ -118,8 +116,6 @@ describe('useAudioStreamer', () => {
 
     const recorder = mockMediaRecorderInstances[0];
     expect(recorder.start).toHaveBeenCalledWith(10000);
-    // Remote audio track must NOT be touched
-    expect(mockRemoteStream.getAudioTracks).not.toHaveBeenCalled();
     expect(mockLocalStream.getAudioTracks).toHaveBeenCalled();
   });
 
@@ -134,8 +130,8 @@ describe('useAudioStreamer', () => {
     const { result } = renderHook(() =>
       useAudioStreamer({
         interviewId: 'interview-123',
+        profileId: 'cand-123',
         localStream: mockLocalStream,
-        remoteStream: mockRemoteStream,
         isCallActive: true,
         role: 'candidate',
       })
@@ -156,6 +152,7 @@ describe('useAudioStreamer', () => {
 
     const formData = options.body as FormData;
     expect(formData.get('interview_id')).toBe('interview-123');
+    expect(formData.get('profile_id')).toBe('cand-123');
     expect(formData.get('role')).toBe('candidate');
     expect(formData.get('chunk_index')).toBe('0');
 
@@ -177,7 +174,6 @@ describe('useAudioStreamer', () => {
       useAudioStreamer({
         interviewId: 'interview-123',
         localStream: mockLocalStream,
-        remoteStream: mockRemoteStream,
         isCallActive: true,
         role: 'interviewer',
       })
@@ -210,7 +206,6 @@ describe('useAudioStreamer', () => {
         initialProps: {
           interviewId: 'interview-123',
           localStream: mockLocalStream,
-          remoteStream: mockRemoteStream,
           isCallActive: true,
           role: 'candidate',
         },
@@ -223,7 +218,6 @@ describe('useAudioStreamer', () => {
     rerender({
       interviewId: 'interview-123',
       localStream: mockLocalStream,
-      remoteStream: mockRemoteStream,
       isCallActive: false,
       role: 'candidate',
     });

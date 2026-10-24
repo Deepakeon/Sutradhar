@@ -118,8 +118,8 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
     finalizeRecording,
   } = useAudioStreamer({
     interviewId,
+    profileId: currentProfile?.id,
     localStream,
-    remoteStream,
     isCallActive: connectionState === 'connected',
     role: currentProfile?.role || 'candidate',
     sessionStartedAt: interview?.session_started_at,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { uploadAudioChunk } from '@/lib/cloudinary';
+import type { ChunkUploadResponse } from '@/types/interview';
 
 export async function POST(req: Request | NextRequest) {
   try {
@@ -23,6 +24,7 @@ export async function POST(req: Request | NextRequest) {
     const audioFile = formData.get('audio') as Blob | File | null;
     const interviewId = formData.get('interview_id') as string | null;
     const role = formData.get('role') as string | null;
+    const profileId = formData.get('profile_id') as string | null;
     const chunkIndexStr = formData.get('chunk_index') as string | null;
     const startOffsetMsStr = formData.get('start_offset_ms') as string | null;
     const endOffsetMsStr = formData.get('end_offset_ms') as string | null;
@@ -38,6 +40,14 @@ export async function POST(req: Request | NextRequest) {
       return NextResponse.json(
         { error: 'Invalid role: must be candidate or interviewer' },
         { status: 400 }
+      );
+    }
+
+    // If profile_id was supplied, verify it matches authenticated user
+    if (profileId && profileId !== user.id) {
+      return NextResponse.json(
+        { error: 'Access Denied: profile_id does not match active session' },
+        { status: 403 }
       );
     }
 
@@ -131,13 +141,19 @@ export async function POST(req: Request | NextRequest) {
       );
     }
 
-    // Update session_started_at (if not previously set) and total_chunks count in private.interviews
+    // Atomically query exact chunk count for this interview to prevent race conditions
+    const { count: actualChunkCount } = await supabase
+      .schema('private')
+      .from('interview_chunks')
+      .select('*', { count: 'exact', head: true })
+      .eq('interview_id', interviewId);
+
     const interviewUpdates: {
       total_chunks: number;
       updated_at: string;
       session_started_at?: string;
     } = {
-      total_chunks: (interview.total_chunks || 0) + 1,
+      total_chunks: actualChunkCount ?? (interview.total_chunks + 1),
       updated_at: new Date().toISOString(),
     };
 
@@ -151,7 +167,12 @@ export async function POST(req: Request | NextRequest) {
       .update(interviewUpdates)
       .eq('id', interviewId);
 
-    return NextResponse.json({ success: true, chunk }, { status: 201 });
+    const responseBody: ChunkUploadResponse = {
+      success: true,
+      chunk,
+    };
+
+    return NextResponse.json(responseBody, { status: 201 });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Internal Server Error';
     console.error('Chunk upload handler error:', err);
