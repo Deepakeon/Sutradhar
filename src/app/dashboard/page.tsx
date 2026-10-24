@@ -50,186 +50,60 @@ export default function DashboardOverviewPage() {
 
       {/* Bento Grid Row 1: Profile Block & Notification / Action Hub */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Tile 1: Short Profile Block (5 cols) */}
-        <div className="lg:col-span-5 rounded-[12px] bg-[#1a1a1a] border border-[#3d3a39] p-5 flex flex-col justify-between space-y-4 hover:border-[#00d992]/40 transition-colors shadow-xs">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between border-b border-[#3d3a39]/70 pb-3">
-              <span className="text-[11px] font-mono uppercase tracking-[2px] text-[#8b949e]">
-                USER PROFILE
-              </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#00d992]/15 text-[#00d992] border border-[#00d992]/40">
-                VERIFIED USER
-              </span>
-            </div>
+        {/* Tile: Live Notification & Action Hub */}
+        <div className="lg:col-span-12 rounded-[12px] bg-[#1a1a1a] border border-[#3d3a39] p-5 flex flex-col justify-between space-y-4 hover:border-[#00d992]/40 transition-colors shadow-xs">
+          <div className="space-y-4">
+            {/* Main Content Block: Prepare for & Skills */}
+            <div className="p-4 rounded-[10px] flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div className="space-y-2 min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[20px] font-mono uppercase tracking-wider text-[#00d992] font-semibold">
+                    Prepare for
+                  </span>
+                  <span className="text-base font-bold text-[#ffffff]">
+                    {nextUpcomingSession?.format || ((Array.isArray(profile.targetRoles) && typeof profile.targetRoles[0] === 'string') ? profile.targetRoles[0] : 'Staff & Principal Calibrations')}
+                  </span>
+                </div>
 
-            <div className="flex items-start gap-3.5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={currentUser.avatar}
-                alt={currentUser.name}
-                className="w-14 h-14 rounded-full border border-[#3d3a39] object-cover ring-2 ring-[#00d992]/30 flex-shrink-0"
-              />
-              <div className="min-w-0">
-                <h2 className="text-base font-bold text-[#ffffff] truncate">
-                  {currentUser.name}
-                </h2>
-                <p className="text-xs text-[#00d992] font-mono mt-0.5">
-                  {currentUser.email}
+                <p className="text-xs text-[#bdbdbd] leading-relaxed max-w-2xl">
+                  {nextUpcomingSession?.candidateNotes || (typeof profile.headline === 'string' ? profile.headline : 'Senior Distributed Systems Engineer targeting Staff / Principal Roles')}
                 </p>
+
+                <div className="flex flex-wrap gap-1.5 pt-1">
+                  {(Array.isArray(profile.domains) ? profile.domains : []).slice(0, 4).map((dom) => {
+                    const domText = typeof dom === 'string' ? dom : '';
+                    if (!domText) return null;
+                    return (
+                      <span key={domText} className="text-[10px] font-mono px-2 py-0.5 rounded-[4px] bg-[#1a1a1a] border border-[#3d3a39] text-[#bdbdbd]">
+                        {domText}
+                      </span>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
 
-            <p className="text-xs text-[#bdbdbd] line-clamp-2 leading-relaxed">
-              {profile.headline}
-            </p>
-
-            <div className="space-y-1.5 pt-1">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-[#8b949e] font-semibold block">
-                Prepare for:
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {profile.domains.slice(0, 3).map((dom) => (
-                  <span key={dom} className="text-[10.5px] font-mono px-2 py-0.5 rounded-[4px] bg-[#101010] border border-[#3d3a39] text-[#bdbdbd]">
-                    {dom}
-                  </span>
-                ))}
-                {profile.domains.length > 3 && (
-                  <span className="text-[10.5px] font-mono px-1.5 py-0.5 text-[#8b949e]">
-                    +{profile.domains.length - 3} more
-                  </span>
-                )}
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2.5 flex-shrink-0 pt-2 md:pt-0">
+                <Link
+                  href="/dashboard/interviews"
+                  className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all text-xs px-3.5 py-2 cursor-pointer flex items-center gap-1.5 shadow-xs"
+                >
+                  <span>Browse Interviewers</span>
+                  <span>→</span>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => handleOpenEditor('context')}
+                  className="inline-flex items-center justify-center font-semibold rounded-[6px] border border-[#3d3a39] bg-[#101010] text-[#f2f2f2] hover:border-[#8b949e] hover:bg-[#1a1a1a] transition-all text-xs px-3.5 py-2 cursor-pointer shadow-xs"
+                >
+                  Edit Profile
+                </button>
               </div>
             </div>
           </div>
 
-          <div className="pt-3 border-t border-[#3d3a39]/70 flex items-center justify-between">
-            <Link
-              href="/dashboard/profile"
-              className="text-xs font-semibold text-[#2fd6a1] hover:text-[#00d992] transition-colors cursor-pointer flex items-center gap-1"
-            >
-              <span>View Full Profile</span>
-              <span>→</span>
-            </Link>
-          </div>
-        </div>
-
-        {/* Tile 2: Live Notification & Action Hub (7 cols) */}
-        <div className="lg:col-span-7 rounded-[12px] bg-[#1a1a1a] border border-[#3d3a39] p-5 flex flex-col justify-between space-y-4 shadow-xs">
-          <div className="space-y-3">
-            <div className="flex items-center justify-between border-b border-[#3d3a39]/70 pb-3">
-              <span className="text-[11px] font-mono uppercase tracking-[2px] text-[#8b949e] flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
-                <span>LIVE NOTIFICATION HUB</span>
-              </span>
-              <span className="text-[10.5px] font-mono text-[#8b949e]">
-                {pendingRequests.length} Action{pendingRequests.length !== 1 ? 's' : ''} Due
-              </span>
-            </div>
-
-            {/* Priority 1: Pending Request Alert */}
-            {pendingRequests.length > 0 ? (
-              <div className="p-3.5 rounded-[8px] bg-[#101010] border-2 border-amber-400/50 space-y-2.5">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={pendingRequests[0].candidateAvatar}
-                      alt={pendingRequests[0].candidateName}
-                      className="w-8 h-8 rounded-full border border-[#3d3a39] object-cover"
-                    />
-                    <div>
-                      <p className="text-xs font-bold text-[#f2f2f2]">
-                        New Request: {pendingRequests[0].candidateName}
-                      </p>
-                      <p className="text-[11px] text-[#8b949e] font-mono">
-                        {pendingRequests[0].format} • {pendingRequests[0].scheduledAt}
-                      </p>
-                    </div>
-                  </div>
-                  <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-400/15 text-amber-400 border border-amber-400/40 uppercase">
-                    Action Required
-                  </span>
-                </div>
-
-                {pendingRequests[0].candidateNotes && (
-                  <p className="text-[11.5px] text-[#bdbdbd] italic bg-[#1a1a1a] p-2 rounded border border-[#3d3a39]/60 line-clamp-1">
-                    &ldquo;{pendingRequests[0].candidateNotes}&rdquo;
-                  </p>
-                )}
-
-                <div className="flex items-center justify-between pt-1">
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => handleAcceptRequest(pendingRequests[0].id)}
-                      className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all text-[11px] px-3 py-1 cursor-pointer"
-                    >
-                      Accept
-                    </button>
-                    <button
-                      onClick={() => handleDeclineRequest(pendingRequests[0].id)}
-                      className="inline-flex items-center justify-center font-semibold rounded-[6px] border border-[#3d3a39] bg-[#101010] text-[#f2f2f2] hover:border-red-500/40 hover:bg-[#1a1a1a] transition-all text-[11px] px-3 py-1 text-red-400 hover:text-red-300 cursor-pointer"
-                    >
-                      Decline
-                    </button>
-                  </div>
-                  <Link
-                    href="/dashboard/calls"
-                    className="text-[11px] text-[#2fd6a1] hover:text-[#00d992] cursor-pointer"
-                  >
-                    Open In Sessions Tab →
-                  </Link>
-                </div>
-              </div>
-            ) : (
-              <div className="p-3.5 rounded-[8px] bg-[#101010] border border-[#3d3a39] text-xs text-[#8b949e] flex items-center gap-2">
-                <span className="text-[#00d992]">✓</span>
-                <span>All incoming requests resolved. Your inbox is up-to-date.</span>
-              </div>
-            )}
-
-            {/* Priority 2: Next Upcoming Mock Session */}
-            {nextUpcomingSession && (
-              <div className="p-3 rounded-[8px] bg-[#101010] border border-[#00d992]/40 flex items-center justify-between gap-3">
-                <div className="space-y-0.5 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#00d992]" />
-                    <span className="text-[11px] font-mono uppercase text-[#00d992] font-semibold">
-                      Upcoming Session
-                    </span>
-                    <span className="text-[11px] text-[#8b949e] font-mono">
-                      • {nextUpcomingSession.scheduledAt}
-                    </span>
-                  </div>
-                  <p className="text-xs font-semibold text-[#f2f2f2] truncate">
-                    {nextUpcomingSession.format} with {nextUpcomingSession.candidateName}
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {nextUpcomingSession.meetingUrl && (
-                    <a
-                      href={nextUpcomingSession.meetingUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all text-[11px] px-3 py-1 flex items-center gap-1 cursor-pointer"
-                    >
-                      <span>⚡ Launch</span>
-                    </a>
-                  )}
-                  <button
-                    onClick={() => setEvaluatingSession(nextUpcomingSession)}
-                    className="inline-flex items-center justify-center font-semibold rounded-[6px] border border-[#3d3a39] bg-[#101010] text-[#f2f2f2] hover:border-[#8b949e] hover:bg-[#1a1a1a] transition-all text-[11px] px-2.5 py-1 cursor-pointer"
-                  >
-                    Evaluate
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Status Counters Strip */}
           {/* Status Counters Strip - 3 Metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-3 border-t border-[#3d3a39]/70 text-left">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 pt-3 text-left">
             {/* Upcoming Mocks */}
             <Link
               href="/dashboard/calls"
@@ -285,7 +159,7 @@ export default function DashboardOverviewPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
         {/* Tile: Recent Calibrations Tile (7 cols) */}
         {/* Tile: Top Matching Interviewers - suggestion (7 cols) */}
-        <div className="lg:col-span-7 rounded-[12px] bg-[#1a1a1a] border border-[#3d3a39] p-5 space-y-4 shadow-xs">
+        <div className="lg:col-span-7 rounded-[12px] p-5 space-y-4 shadow-xs">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1 border-b border-[#3d3a39]/70 pb-3">
             <div>
               <span className="text-[11px] font-mono uppercase tracking-[2px] text-[#8b949e] font-semibold block">
@@ -367,24 +241,15 @@ export default function DashboardOverviewPage() {
               ))}
           </div>
 
-          {/* Bottom link to Find Interviews page */}
-          <div className="pt-2 border-t border-[#3d3a39]/60 flex justify-end">
-            <Link
-              href="/dashboard/interviews"
-              className="text-xs font-semibold text-[#00d992] hover:text-[#2fd6a1] cursor-pointer flex items-center gap-1.5"
-            >
-              <span>Go to Find Interviews page</span>
-              <span>→</span>
-            </Link>
-          </div>
+          
         </div>
 
-        {/* Tile 6: Operating Model & Availability (5 cols) */}
-        <div className="lg:col-span-5 rounded-[12px] bg-[#1a1a1a] border border-[#3d3a39] p-5 flex flex-col justify-between space-y-4 shadow-xs">
-          <div className="space-y-3">
+        {/* Tile 6: Active Prep Profile (5 cols) */}
+        <div className="lg:col-span-5 rounded-[12px] bg-[#1a1a1a] border border-[#3d3a39] p-5 flex flex-col justify-between space-y-4 hover:border-[#00d992]/40 transition-colors shadow-xs">
+          <div className="space-y-4">
             <div className="flex items-center justify-between border-b border-[#3d3a39]/70 pb-3">
               <span className="text-[11px] font-mono uppercase tracking-[2px] text-[#8b949e]">
-                OPERATING MODEL
+                ACTIVE PREP PROFILE
               </span>
               <button
                 onClick={() => handleOpenEditor('context')}
@@ -394,44 +259,78 @@ export default function DashboardOverviewPage() {
               </button>
             </div>
 
+            {/* Target Roles */}
             <div>
-              <span className="text-[10.5px] font-mono text-[#8b949e] uppercase">Formats Evaluated</span>
-              <div className="space-y-1 mt-1">
-                {profile.context.sessionFormats.map((fmt) => (
-                  <div key={fmt} className="text-xs font-mono text-[#f2f2f2] bg-[#101010] p-1.5 rounded border border-[#3d3a39] truncate">
-                    ✓ {fmt}
-                  </div>
-                ))}
+              <span className="text-[10px] font-mono text-[#8b949e] uppercase tracking-wider block">
+                Target Roles
+              </span>
+              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                {(Array.isArray(profile.targetRoles) ? profile.targetRoles : Array.isArray(currentUser.candidateProfile.targetRoles) ? currentUser.candidateProfile.targetRoles : [])
+                  .filter((role): role is string => typeof role === 'string' && role.trim().length > 0)
+                  .map((role) => (
+                    <span
+                      key={role}
+                      className="text-xs font-mono text-[#f2f2f2] bg-[#101010] px-2.5 py-1 rounded-[5px] border border-[#3d3a39]"
+                    >
+                      {role}
+                    </span>
+                  ))}
               </div>
             </div>
 
+            {/* Timezone & Bandwidth */}
             <div>
-              <span className="text-[10.5px] font-mono text-[#8b949e] uppercase">Weekly Schedule</span>
-              <p className="text-xs text-[#bdbdbd] mt-1 font-mono bg-[#101010] p-2 rounded border border-[#3d3a39]">
-                {profile.context.availabilitySchedule}
-              </p>
+              <span className="text-[10px] font-mono text-[#8b949e] uppercase tracking-wider block">
+                Timezone & Bandwidth
+              </span>
+              <div className="mt-1.5 p-2.5 rounded-[8px] bg-[#101010] border border-[#3d3a39] space-y-2">
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span className="text-[#8b949e]">Timezone</span>
+                  <span className="text-[#f2f2f2]">{typeof profile.timezone === 'string' ? profile.timezone : typeof currentUser.candidateProfile.context.preferredTimezone === 'string' ? currentUser.candidateProfile.context.preferredTimezone : 'America/New_York (UTC-5)'}</span>
+                </div>
+                <div className="flex items-center justify-between text-xs font-mono">
+                  <span className="text-[#8b949e]">Bandwidth</span>
+                  <span className="text-[#00d992] font-semibold">{typeof profile.weeklyAvailability === 'string' ? profile.weeklyAvailability : `${currentUser.candidateProfile.context.weeklyAvailabilityHours || 8} hrs / week`}</span>
+                </div>
+              </div>
             </div>
 
+            {/* Focus Areas */}
             <div>
-              <div className="flex justify-between items-center text-[10.5px] font-mono">
-                <span className="text-[#8b949e] uppercase">Capacity Load</span>
-                <span className="text-[#00d992] font-semibold">{acceptedSessions.length} / {profile.context.maxSessionsPerWeek} slots booked</span>
-              </div>
-              <div className="h-1.5 w-full bg-[#101010] rounded-full overflow-hidden border border-[#3d3a39] mt-1">
-                <div
-                  className="h-full bg-[#00d992] rounded-full transition-all duration-300"
-                  style={{
-                    width: `${Math.min(100, (acceptedSessions.length / (profile.context.maxSessionsPerWeek || 1)) * 100)}%`
-                  }}
-                />
+              <span className="text-[10px] font-mono text-[#8b949e] uppercase tracking-wider block">
+                Focus Areas
+              </span>
+              <div className="flex flex-wrap gap-1.5 mt-1.5">
+                {(Array.isArray(currentUser.candidateProfile.context.interviewFocus) && currentUser.candidateProfile.context.interviewFocus.length > 0
+                  ? currentUser.candidateProfile.context.interviewFocus
+                  : Array.isArray(profile.domains)
+                    ? profile.domains
+                    : []
+                )
+                  .filter((focus): focus is string => typeof focus === 'string' && focus.trim().length > 0)
+                  .map((focus) => (
+                    <span
+                      key={focus}
+                      className="text-[10.5px] font-mono px-2 py-0.5 rounded-[4px] bg-[#101010] border border-[#3d3a39] text-[#bdbdbd]"
+                    >
+                      {focus}
+                    </span>
+                  ))}
               </div>
             </div>
           </div>
 
           <div className="pt-3 border-t border-[#3d3a39]/70 flex items-center justify-between">
             <span className="text-[11px] text-[#00d992] font-mono">
-              {profile.context.hourlyHonorarium}
+              {profile.context.hourlyHonorarium || 'Reciprocal Mock / Free'}
             </span>
+            <Link
+              href="/dashboard/profile"
+              className="text-xs font-semibold text-[#2fd6a1] hover:text-[#00d992] transition-colors cursor-pointer flex items-center gap-1"
+            >
+              <span>Full Profile</span>
+              <span>→</span>
+            </Link>
           </div>
         </div>
       </div>
