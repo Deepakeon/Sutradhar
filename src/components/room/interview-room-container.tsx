@@ -173,7 +173,7 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
   // Streaming begins as soon as this user is present in the room with microphone stream available
   const isRoomActive = !callEndedState.ended && Boolean(currentProfile) && Boolean(localStream);
 
-  // Hook 2: Dual-Party 10s Cloudinary Audio Ingestion
+  // Hook 2: Dual-Party 10s Audio Ingestion
   const {
     isRecording,
     recordingDuration,
@@ -256,7 +256,7 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
           </div>
           <h2 className="text-xl font-bold text-[#f2f2f2] mb-2">Interview Session Concluded</h2>
           <p className="text-sm text-[#8b949e] mb-6">
-            The session has ended. All audio chunks were securely streamed to Cloudinary.
+            The session has ended. All audio chunks were securely streamed.
           </p>
 
           <div className="bg-[#101010] border border-[#3d3a39] rounded-lg p-4 mb-6 text-left text-xs font-mono space-y-2">

@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
-import { uploadAudioChunk } from '@/lib/cloudinary';
 import { isWebMHeader, extractWebMHeader, ensureWebMHeader } from '@/lib/audio/webm-header';
 import type { ChunkUploadResponse } from '@/types/interview';
 
@@ -100,7 +99,7 @@ export async function POST(req: Request | NextRequest) {
     const arrayBuffer = await audioFile.arrayBuffer();
     let buffer = Buffer.from(arrayBuffer);
 
-    // Ensure WebM container header is present for standalone Cloudinary / FFmpeg ingestion
+    // Ensure WebM container header is present for standalone audio / FFmpeg ingestion
     const cacheKey = `${interviewId}:${role}`;
     if (isWebMHeader(buffer)) {
       const extractedHeader = extractWebMHeader(buffer);
@@ -111,19 +110,9 @@ export async function POST(req: Request | NextRequest) {
       buffer = ensureWebMHeader(buffer, streamHeaderCache.get(cacheKey));
     }
 
-    // Stream buffer directly to Cloudinary
-    const uploadResult = await uploadAudioChunk({
-      buffer,
-      interviewId,
-      role,
-      chunkIndex,
-      startOffsetMs,
-    });
-
-    const durationSeconds =
-      uploadResult.duration && uploadResult.duration > 0
-        ? uploadResult.duration
-        : Math.round((endOffsetMs - startOffsetMs) / 1000) || 10;
+    const storagePath = `sutradhar/interviews/${interviewId}/${role}/chunk_${chunkIndex}_${startOffsetMs}.webm`;
+    const chunkUrl = `/api/room/chunks/${storagePath}`;
+    const durationSeconds = Math.round((endOffsetMs - startOffsetMs) / 1000) || 10;
 
     // Persist chunk record in private.interview_chunks
     const { data: chunk, error: chunkInsertError } = await supabase
@@ -134,8 +123,8 @@ export async function POST(req: Request | NextRequest) {
           interview_id: interviewId,
           profile_id: user.id,
           chunk_index: chunkIndex,
-          cloudinary_public_id: uploadResult.public_id,
-          cloudinary_url: uploadResult.secure_url,
+          storage_path: storagePath,
+          chunk_url: chunkUrl,
           duration_seconds: durationSeconds,
           start_offset_ms: startOffsetMs,
           end_offset_ms: endOffsetMs,

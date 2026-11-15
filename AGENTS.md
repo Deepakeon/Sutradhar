@@ -2,7 +2,7 @@
 
 ## Product Intent Alignment
 
-Before suggesting, planning, designing, or implementing any feature, UI, flow, or architectural change, you MUST ALWAYS read [PRODUCT.md](file:///home/deepak/Documents/cloudinary-hackathon/Sutradhar/PRODUCT.md) and ensure your recommendations strictly align with the core product intent: helping people who lack interview experience or confidence practice both technical and behavioral interviews by being interviewed and interviewing others.
+Before suggesting, planning, designing, or implementing any feature, UI, flow, or architectural change, you MUST ALWAYS read [PRODUCT.md](file:///home/deepak/Documents/Sutradhar/PRODUCT.md) and ensure your recommendations strictly align with the core product intent: helping people who lack interview experience or confidence practice both technical and behavioral interviews by being interviewed and interviewing others.
 
 ## Agent skills
 

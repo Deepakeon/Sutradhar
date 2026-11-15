@@ -417,7 +417,7 @@ describe('Room Container Seam (/room/[id])', () => {
       recorder.ondataavailable({ data: mockBlob });
     });
 
-    // Verify chunk was dispatched to Cloudinary ingestion endpoint
+    // Verify chunk was dispatched to audio chunk ingestion endpoint
     await waitFor(() => {
       expect(mockFetch).toHaveBeenCalledWith(
         '/api/room/chunk-upload',

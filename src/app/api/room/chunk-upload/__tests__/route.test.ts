@@ -2,14 +2,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { POST } from '../route';
 import { createClient } from '@/lib/supabase/server';
-import { uploadAudioChunk } from '@/lib/cloudinary';
 
 vi.mock('@/lib/supabase/server', () => ({
   createClient: vi.fn(),
-}));
-
-vi.mock('@/lib/cloudinary', () => ({
-  uploadAudioChunk: vi.fn(),
 }));
 
 describe('POST /api/room/chunk-upload', () => {
@@ -23,9 +18,29 @@ describe('POST /api/room/chunk-upload', () => {
   };
 
   let mockSupabase: any;
+  let mockUpsert: any;
 
   beforeEach(() => {
     vi.clearAllMocks();
+
+    mockUpsert = vi.fn().mockImplementation((payload: any) => ({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({
+          data: {
+            id: 'chunk-uuid-1',
+            interview_id: payload.interview_id,
+            profile_id: payload.profile_id,
+            chunk_index: payload.chunk_index,
+            storage_path: payload.storage_path,
+            chunk_url: payload.chunk_url,
+            duration_seconds: payload.duration_seconds,
+            start_offset_ms: payload.start_offset_ms,
+            end_offset_ms: payload.end_offset_ms,
+          },
+          error: null,
+        }),
+      }),
+    }));
 
     mockSupabase = {
       auth: {
@@ -46,24 +61,7 @@ describe('POST /api/room/chunk-upload', () => {
             select: vi.fn().mockReturnValue({
               eq: vi.fn().mockResolvedValue({ count: 1 }),
             }),
-            upsert: vi.fn().mockReturnValue({
-              select: vi.fn().mockReturnValue({
-                single: vi.fn().mockResolvedValue({
-                  data: {
-                    id: 'chunk-uuid-1',
-                    interview_id: 'interview-123',
-                    profile_id: 'user-cand-123',
-                    chunk_index: 0,
-                    cloudinary_public_id: 'sutradhar/interviews/interview-123/candidate/chunk_0_0',
-                    cloudinary_url: 'https://cloudinary.com/chunk_0_0.webm',
-                    duration_seconds: 10,
-                    start_offset_ms: 0,
-                    end_offset_ms: 10000,
-                  },
-                  error: null,
-                }),
-              }),
-            }),
+            upsert: mockUpsert,
           };
         }
         return {};
@@ -71,11 +69,6 @@ describe('POST /api/room/chunk-upload', () => {
     };
 
     vi.mocked(createClient).mockResolvedValue(mockSupabase);
-    vi.mocked(uploadAudioChunk).mockResolvedValue({
-      public_id: 'sutradhar/interviews/interview-123/candidate/chunk_0_0',
-      secure_url: 'https://cloudinary.com/chunk_0_0.webm',
-      duration: 10,
-    });
   });
 
   it('returns 401 when user is not authenticated', async () => {
@@ -155,7 +148,7 @@ describe('POST /api/room/chunk-upload', () => {
     expect(json.error).toMatch(/profile role mismatch/i);
   });
 
-  it('successfully uploads audio chunk, saves to interview_chunks, and updates interviews table', async () => {
+  it('successfully processes audio chunk, saves to interview_chunks, and updates interviews table', async () => {
     const formData = new FormData();
     const file = new File(['sample-audio-data'], 'chunk.webm', { type: 'audio/webm;codecs=opus' });
     formData.append('audio', file);
@@ -176,17 +169,8 @@ describe('POST /api/room/chunk-upload', () => {
 
     expect(json.success).toBe(true);
     expect(json.chunk).toBeDefined();
-    expect(json.chunk.cloudinary_public_id).toBe('sutradhar/interviews/interview-123/candidate/chunk_0_0');
-
-    // Verify Cloudinary was called
-    expect(uploadAudioChunk).toHaveBeenCalledWith(
-      expect.objectContaining({
-        interviewId: 'interview-123',
-        role: 'candidate',
-        chunkIndex: 0,
-        startOffsetMs: 0,
-      })
-    );
+    expect(json.chunk.storage_path).toBe('sutradhar/interviews/interview-123/candidate/chunk_0_0.webm');
+    expect(json.chunk.chunk_url).toBe('/api/room/chunks/sutradhar/interviews/interview-123/candidate/chunk_0_0.webm');
 
     // Verify Supabase schema private was queried
     expect(mockSupabase.schema).toHaveBeenCalledWith('private');
@@ -206,7 +190,8 @@ describe('POST /api/room/chunk-upload', () => {
     form0.append('start_offset_ms', '0');
     form0.append('end_offset_ms', '10000');
 
-    await POST(new Request('http://localhost:3000/api/room/chunk-upload', { method: 'POST', body: form0 }));
+    const res0 = await POST(new Request('http://localhost:3000/api/room/chunk-upload', { method: 'POST', body: form0 }));
+    expect(res0.status).toBe(201);
 
     // 2. Send chunk 1 with cluster data only (no EBML header)
     const chunk1Bytes = new Uint8Array([...clusterHeader, 0xaa, 0xbb]);
@@ -218,14 +203,19 @@ describe('POST /api/room/chunk-upload', () => {
     form1.append('start_offset_ms', '10000');
     form1.append('end_offset_ms', '20000');
 
-    await POST(new Request('http://localhost:3000/api/room/chunk-upload', { method: 'POST', body: form1 }));
-
-    // Verify Cloudinary was called for chunk 1 with header prepended
-    const secondCall = vi.mocked(uploadAudioChunk).mock.calls[1][0];
-    expect(secondCall.chunkIndex).toBe(1);
-    expect(secondCall.buffer[0]).toBe(0x1a);
-    expect(secondCall.buffer[1]).toBe(0x45);
-    expect(secondCall.buffer[2]).toBe(0xdf);
-    expect(secondCall.buffer[3]).toBe(0xa3);
+    const res1 = await POST(new Request('http://localhost:3000/api/room/chunk-upload', { method: 'POST', body: form1 }));
+    expect(res1.status).toBe(201);
+    const json1 = await res1.json();
+    expect(json1.success).toBe(true);
+    expect(mockUpsert).toHaveBeenCalledTimes(2);
+    expect(mockUpsert).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        chunk_index: 1,
+        start_offset_ms: 10000,
+        end_offset_ms: 20000,
+        storage_path: 'sutradhar/interviews/interview-123/candidate/chunk_1_10000.webm',
+      }),
+      expect.any(Object)
+    );
   });
 });

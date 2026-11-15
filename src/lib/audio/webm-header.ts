@@ -3,7 +3,7 @@
  *
  * MediaRecorder with timeslice emits the EBML header + tracks in slice 0,
  * but subsequent slices (slice 1, 2, 3...) contain only raw Cluster data
- * without container metadata. Cloudinary / FFmpeg requires container headers
+ * without container metadata. Audio processors and FFmpeg require container headers
  * to process and transcode independent chunks.
  */
 

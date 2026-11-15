@@ -42,8 +42,7 @@ export type Database = {
       interview_chunks: {
         Row: {
           chunk_index: number
-          cloudinary_public_id: string
-          cloudinary_url: string
+          chunk_url: string | null
           created_at: string
           duration_seconds: number
           end_offset_ms: number | null
@@ -51,13 +50,13 @@ export type Database = {
           interview_id: string
           profile_id: string | null
           start_offset_ms: number
+          storage_path: string | null
           transcribed_at: string | null
           transcript: string | null
         }
         Insert: {
           chunk_index: number
-          cloudinary_public_id: string
-          cloudinary_url: string
+          chunk_url?: string | null
           created_at?: string
           duration_seconds?: number
           end_offset_ms?: number | null
@@ -65,13 +64,13 @@ export type Database = {
           interview_id: string
           profile_id?: string | null
           start_offset_ms?: number
+          storage_path?: string | null
           transcribed_at?: string | null
           transcript?: string | null
         }
         Update: {
           chunk_index?: number
-          cloudinary_public_id?: string
-          cloudinary_url?: string
+          chunk_url?: string | null
           created_at?: string
           duration_seconds?: number
           end_offset_ms?: number | null
@@ -79,6 +78,7 @@ export type Database = {
           interview_id?: string
           profile_id?: string | null
           start_offset_ms?: number
+          storage_path?: string | null
           transcribed_at?: string | null
           transcript?: string | null
         }
