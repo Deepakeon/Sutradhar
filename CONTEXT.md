@@ -19,3 +19,11 @@ A 1-on-1 practice session between a Candidate and an Interviewer.
 
 **Room**:
 The real-time WebRTC audio and video interface where an Interview takes place.
+
+**Interview Recording**:
+The locally stored media capture of an Interview session residing in the Profile's browser origin private file system (OPFS).
+_Avoid_: Video upload, session video, cloud recording
+
+**Interview Transcript**:
+The timestamped text transcription generated locally on demand from an Interview Recording and stored in the Profile's OPFS.
+_Avoid_: Cloud transcript, meeting notes
