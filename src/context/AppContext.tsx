@@ -29,7 +29,6 @@ interface AppContextType {
   activeRole: UserRole;
   setActiveRole: (role: UserRole) => void;
   updateCandidateProfile: (profile: Partial<CandidateProfile>) => void;
-  updateUserProfile: (profile: Partial<InterviewerProfile>) => void;
   updateInterviewerProfile: (profile: Partial<InterviewerProfile>) => void;
   sessions: InterviewSession[];
   requestInterview: (
@@ -54,8 +53,8 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
-const STORAGE_KEY_USER = 'sutradhar_user_account_v3';
-const STORAGE_KEY_SESSIONS = 'sutradhar_sessions_v3';
+const STORAGE_KEY_USER = 'sutradhar_user_account_v1';
+const STORAGE_KEY_SESSIONS = 'sutradhar_sessions_v1';
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [currentUser, setCurrentUser] = useState<UserAccount>(INITIAL_USER_ACCOUNT);
@@ -73,23 +72,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const storedSessions = localStorage.getItem(STORAGE_KEY_SESSIONS);
       if (storedUser) {
         const parsed = JSON.parse(storedUser);
-        setCurrentUser({
-          ...INITIAL_USER_ACCOUNT,
-          ...parsed,
-          interviewerProfile: {
-            ...INITIAL_USER_ACCOUNT.interviewerProfile,
-            ...(parsed.interviewerProfile || {}),
-            context: {
-              ...INITIAL_USER_ACCOUNT.interviewerProfile.context,
-              ...(parsed.interviewerProfile?.context || {})
-            },
-            experience: {
-              ...INITIAL_USER_ACCOUNT.interviewerProfile.experience,
-              ...(parsed.interviewerProfile?.experience || {})
-            },
-            jobDescriptions: parsed.interviewerProfile?.jobDescriptions ?? INITIAL_USER_ACCOUNT.interviewerProfile.jobDescriptions ?? []
-          }
-        });
+        setCurrentUser(parsed);
       }
       if (storedSessions) {
         const parsedSessions = JSON.parse(storedSessions);
@@ -139,8 +122,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const setActiveRole = (role: UserRole) => {
     setCurrentUser((prev) => ({
       ...prev,
-      activeRole: 'interviewer'
+      activeRole: role
     }));
+    setActiveTab('overview');
+    showToast(
+      `Switched to ${role === 'candidate' ? 'Candidate' : 'Interviewer'} Mode. Dashboard views updated.`,
+      'info'
+    );
   };
 
   const updateCandidateProfile = (updatedFields: Partial<CandidateProfile>) => {
@@ -154,7 +142,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     showToast('Candidate profile updated successfully', 'success');
   };
 
-  const updateUserProfile = (updatedFields: Partial<InterviewerProfile>) => {
+  const updateInterviewerProfile = (updatedFields: Partial<InterviewerProfile>) => {
     setCurrentUser((prev) => ({
       ...prev,
       interviewerProfile: {
@@ -162,10 +150,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ...updatedFields
       }
     }));
-    showToast('User profile updated successfully', 'success');
+    showToast('Interviewer profile updated successfully', 'success');
   };
-
-  const updateInterviewerProfile = updateUserProfile;
 
   const requestInterview = (
     targetId: string,
@@ -176,25 +162,48 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     date: string,
     notes: string
   ) => {
-    const newSession: InterviewSession = {
-      id: `ses_${Date.now()}`,
-      candidateId: targetId,
-      candidateName: targetName,
-      candidateAvatar: targetAvatar,
-      candidateRole: targetCompanyOrRole,
-      interviewerId: currentUser.id,
-      interviewerName: currentUser.name,
-      interviewerAvatar: currentUser.avatar,
-      interviewerCompany: currentUser.interviewerProfile.experience.primaryCompany,
-      format,
-      scheduledAt: date,
-      status: 'pending',
-      originatorRole: 'interviewer',
-      interviewerNotes: notes
-    };
+    const isCandidate = currentUser.activeRole === 'candidate';
+    const newSession: InterviewSession = isCandidate
+      ? {
+          id: `ses_${Date.now()}`,
+          candidateId: currentUser.id,
+          candidateName: currentUser.name,
+          candidateAvatar: currentUser.avatar,
+          candidateRole: currentUser.candidateProfile.headline,
+          interviewerId: targetId,
+          interviewerName: targetName,
+          interviewerAvatar: targetAvatar,
+          interviewerCompany: targetCompanyOrRole,
+          format,
+          scheduledAt: date,
+          status: 'pending',
+          originatorRole: 'candidate',
+          candidateNotes: notes
+        }
+      : {
+          id: `ses_${Date.now()}`,
+          candidateId: targetId,
+          candidateName: targetName,
+          candidateAvatar: targetAvatar,
+          candidateRole: targetCompanyOrRole,
+          interviewerId: currentUser.id,
+          interviewerName: currentUser.name,
+          interviewerAvatar: currentUser.avatar,
+          interviewerCompany: currentUser.interviewerProfile.experience.primaryCompany,
+          format,
+          scheduledAt: date,
+          status: 'pending',
+          originatorRole: 'interviewer',
+          interviewerNotes: notes
+        };
 
     setSessions((prev) => [newSession, ...prev]);
-    showToast(`Invitation sent to candidate ${targetName}`, 'success');
+    showToast(
+      isCandidate
+        ? `Interview request sent to ${targetName}`
+        : `Invitation sent to candidate ${targetName}`,
+      'success'
+    );
   };
 
   const updateSessionStatus = (sessionId: string, status: InterviewSession['status']) => {
@@ -232,7 +241,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         activeRole: currentUser.activeRole,
         setActiveRole,
         updateCandidateProfile,
-        updateUserProfile,
         updateInterviewerProfile,
         sessions,
         requestInterview,

@@ -33,23 +33,16 @@ export interface CandidateProfile {
   experience: ExperienceItem[];
 }
 
-export type SkillProficiency = 'Beginner' | 'Intermediate' | 'Expert';
-
 export interface InterviewerSkillItem {
   id: string;
   name: string;
-  category?: string;
-  proficiency: SkillProficiency;
-  level?: 'Staff Bar Raiser' | 'Senior Assessor' | 'Domain Specialist' | string;
-  interviewsConducted?: number;
+  category: string;
+  level: 'Staff Bar Raiser' | 'Senior Assessor' | 'Domain Specialist';
+  interviewsConducted: number;
 }
 
 export interface InterviewerProfile {
   headline: string;
-  objectives: string;
-  targetRoles: string[];
-  timezone: string;
-  weeklyAvailability: string;
   domains: string[];
   context: {
     interviewPhilosophy: string;
@@ -67,24 +60,6 @@ export interface InterviewerProfile {
     yearsInterviewing: number;
     certifications: string[];
   };
-  jobDescriptions?: JobDescription[];
-}
-
-export type SkillImportance = 'Important' | 'Additional' | 'Bonus';
-
-export interface JDSkillItem {
-  id: string;
-  name: string;
-  classification: SkillImportance;
-}
-
-export interface JobDescription {
-  id: string;
-  roleTitle: string;
-  note: string;
-  timingAvailable: string;
-  skills: JDSkillItem[];
-  createdAt: string;
 }
 
 export interface UserAccount {
@@ -115,24 +90,15 @@ export interface MatchingInterviewer {
   bio: string;
 }
 
-export interface CandidateSkillWithProficiency {
-  name: string;
-  proficiency: SkillProficiency;
-}
-
 export interface MatchingCandidate {
   id: string;
   name: string;
   avatar: string;
-  headline?: string;
   targetRole: string;
-  objective?: string;
   currentCompany: string;
   yearsExperience: number;
-  availability?: string;
   domains: string[];
   keySkills: string[];
-  skills?: CandidateSkillWithProficiency[];
   preferredFormat: string;
   compatibilityScore: number;
   compatibilityReason: string;
