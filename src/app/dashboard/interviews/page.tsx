@@ -174,10 +174,180 @@ function ProficiencyBucket({
   );
 }
 
+interface CandidateDetailModalProps {
+  candidate: MatchingCandidate | null;
+  onClose: () => void;
+  onInvite: (candidate: MatchingCandidate) => void;
+  getProficiencyStyle: (proficiency?: SkillProficiency | string) => string;
+}
+
+function CandidateDetailModal({
+  candidate,
+  onClose,
+  onInvite,
+  getProficiencyStyle
+}: CandidateDetailModalProps) {
+  if (!candidate) return null;
+
+  const candidateSkills =
+    candidate.skills ||
+    candidate.keySkills.map((sk) => ({
+      name: sk,
+      proficiency: 'Intermediate' as SkillProficiency
+    }));
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-xs animate-in fade-in duration-150">
+      <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[12px] bg-[#1a1a1a] border border-[#3d3a39] p-6 shadow-2xl space-y-5 text-left">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-4 pb-4 border-b border-[#3d3a39]">
+          <div className="flex items-start gap-3.5">
+            <div className="relative">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={candidate.avatar}
+                alt={candidate.name}
+                className="w-14 h-14 rounded-full border border-[#3d3a39] object-cover ring-2 ring-[#00d992]/30 flex-shrink-0"
+              />
+              <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#00d992] border-2 border-[#1a1a1a]" />
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <h3 className="text-lg font-bold text-[#f2f2f2] tracking-tight">
+                  {candidate.name}
+                </h3>
+                <span className="px-2 py-0.5 rounded-full text-[10.5px] font-mono font-bold bg-[#00d992]/15 text-[#00d992] border border-[#00d992]/50">
+                  {candidate.compatibilityScore}% MATCH
+                </span>
+              </div>
+              <p className="text-xs text-[#8b949e] font-mono mt-0.5">
+                <span className="text-[#f2f2f2] font-semibold">{candidate.currentCompany}</span> • {candidate.yearsExperience} yrs experience
+              </p>
+              <div className="mt-1">
+                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-[4px] bg-[#111111] border border-[#3d3a39] text-xs font-semibold text-[#00d992]">
+                  Target: {candidate.targetRole}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={onClose}
+            className="text-[#8b949e] hover:text-[#f2f2f2] text-sm p-1 rounded hover:bg-[#252525] transition-colors cursor-pointer"
+            title="Close"
+          >
+            ✕
+          </button>
+        </div>
+
+        {/* Headline */}
+        {candidate.headline && (
+          <div className="space-y-1">
+            <span className="text-[10px] font-mono uppercase text-[#8b949e] tracking-wider block font-semibold">
+              Professional Headline
+            </span>
+            <p className="text-sm font-semibold text-[#f2f2f2] leading-relaxed">
+              {candidate.headline}
+            </p>
+          </div>
+        )}
+
+        {/* Career Objective */}
+        <div className="p-3.5 rounded-[8px] bg-[#111111] border border-[#3d3a39] space-y-1">
+          <span className="text-[10px] font-mono uppercase text-[#8b949e] tracking-wider block font-semibold">
+            Career Objective & Focus
+          </span>
+          <p className="text-xs text-[#bdbdbd] leading-relaxed">
+            &ldquo;{candidate.objective || candidate.careerGoals}&rdquo;
+          </p>
+        </div>
+
+        {/* Availability & Preferred Format */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="p-3 rounded-[8px] bg-[#141414] border border-[#3d3a39] space-y-1">
+            <span className="text-[10px] font-mono uppercase text-[#8b949e] tracking-wider block font-semibold">
+              ⏱ Availability Schedule
+            </span>
+            <p className="text-xs font-mono text-[#f2f2f2]">
+              {candidate.availability || 'Weekdays 6:00 PM – 9:00 PM EST'}
+            </p>
+          </div>
+          <div className="p-3 rounded-[8px] bg-[#141414] border border-[#3d3a39] space-y-1">
+            <span className="text-[10px] font-mono uppercase text-[#8b949e] tracking-wider block font-semibold">
+              🎙 Preferred Format
+            </span>
+            <p className="text-xs font-mono text-[#00d992]">
+              {candidate.preferredFormat}
+            </p>
+          </div>
+        </div>
+
+        {/* Skills & Proficiency */}
+        <div className="space-y-2 pt-2 border-t border-[#3d3a39]/70">
+          <span className="text-[10.5px] font-mono uppercase text-[#8b949e] tracking-wider block font-semibold">
+            Skills & Proficiency Breakdown ({candidateSkills.length})
+          </span>
+          <div className="flex flex-wrap gap-1.5">
+            {candidateSkills.map((sk) => (
+              <div
+                key={sk.name}
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-[5px] bg-[#111111] border border-[#3d3a39]"
+              >
+                <span className="text-xs font-medium text-[#f2f2f2]">
+                  {sk.name}
+                </span>
+                <span
+                  className={`px-1.5 py-0.5 rounded-[3px] text-[9px] font-mono font-bold uppercase tracking-wider ${getProficiencyStyle(
+                    sk.proficiency
+                  )}`}
+                >
+                  {sk.proficiency}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Rubric Alignment */}
+        <div className="p-3 rounded-[8px] bg-[#101010] border border-[#00d992]/30 space-y-1">
+          <span className="text-[10px] font-mono uppercase text-[#00d992] tracking-wider block font-semibold">
+            Rubric Alignment & Match Rationale
+          </span>
+          <p className="text-xs text-[#bdbdbd] leading-relaxed">
+            {candidate.compatibilityReason}
+          </p>
+        </div>
+
+        {/* Modal Actions */}
+        <div className="pt-4 border-t border-[#3d3a39] flex items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-4 py-2 rounded-[6px] border border-[#3d3a39] bg-[#111111] text-[#f2f2f2] hover:bg-[#202020] text-xs font-semibold cursor-pointer transition-colors"
+          >
+            Close
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onClose();
+              onInvite(candidate);
+            }}
+            className="px-5 py-2 rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] text-xs font-semibold cursor-pointer transition-colors shadow-xs"
+          >
+            Invite to Interview
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function BrowseInterviewsPage() {
   const { matchingCandidates } = useApp();
 
   const [selectedCandidate, setSelectedCandidate] = useState<MatchingCandidate | null>(null);
+  const [viewingCandidate, setViewingCandidate] = useState<MatchingCandidate | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedAvailability, setSelectedAvailability] = useState<string>('all');
 
@@ -569,9 +739,10 @@ export default function BrowseInterviewsPage() {
                 return (
                   <div
                     key={candidate.id}
-                    className="rounded-[14px] bg-[#1a1a1a] border border-[#3d3a39] hover:border-[#00d992]/50 transition-all p-5 flex flex-col justify-between space-y-4 shadow-xs group"
+                    onClick={() => setViewingCandidate(candidate)}
+                    className="rounded-[14px] bg-[#1a1a1a] border border-[#3d3a39] hover:border-[#00d992]/50 transition-all p-5 flex flex-col justify-between space-y-4 shadow-xs group cursor-pointer"
                   >
-                    <div className="space-y-3.5">
+                    <div className="space-y-3">
                       {/* Top Candidate Profile Header */}
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-3">
@@ -582,10 +753,10 @@ export default function BrowseInterviewsPage() {
                               alt={candidate.name}
                               className="w-12 h-12 rounded-full border border-[#3d3a39] object-cover ring-2 ring-[#00d992]/20 flex-shrink-0"
                             />
-                            <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#00d992] border-2 border-[#1a1a1a]" />
+                            <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-[#00d992] border-2 border-[#1a1a1a]" />
                           </div>
                           <div className="min-w-0">
-                            <h3 className="text-base font-bold text-[#f2f2f2] tracking-tight truncate">
+                            <h3 className="text-base font-bold text-[#f2f2f2] tracking-tight truncate group-hover:text-[#00d992] transition-colors">
                               {candidate.name}
                             </h3>
                             <p className="text-xs text-[#8b949e] font-mono mt-0.5 truncate">
@@ -604,81 +775,47 @@ export default function BrowseInterviewsPage() {
                         </span>
                       </div>
 
-                      {/* Headline Callout */}
+                      {/* Headline preview */}
                       {candidate.headline && (
-                        <div>
-                          <p className="text-xs font-semibold text-[#f2f2f2] line-clamp-2 leading-relaxed">
-                            {candidate.headline}
-                          </p>
-                        </div>
+                        <p className="text-xs text-[#bdbdbd] line-clamp-2 leading-relaxed">
+                          {candidate.headline}
+                        </p>
                       )}
 
-                      {/* Objective */}
-                      <div className="p-2.5 rounded-[6px] bg-[#111111] border border-[#3d3a39] space-y-0.5">
-                        <span className="text-[9.5px] font-mono uppercase text-[#8b949e] tracking-wider block">
-                          Career Objective
-                        </span>
-                        <p className="text-[11.5px] text-[#bdbdbd] line-clamp-2 leading-relaxed">
-                          &ldquo;{candidate.objective || candidate.careerGoals}&rdquo;
-                        </p>
-                      </div>
-
-                      {/* Availability Badge */}
-                      <div className="flex items-center gap-2 p-2 rounded-[6px] bg-[#151515] border border-[#3d3a39]/70 text-xs font-mono">
-                        <span className="text-[#00d992] font-semibold">
-                          ⏱
-                        </span>
-                        <span className="text-[#f2f2f2] truncate">
-                          {candidate.availability || 'Weekdays 6:00 PM – 9:00 PM EST'}
-                        </span>
-                      </div>
-
-                      {/* Skills with PROFICIENCY LEVEL badges */}
-                      <div className="space-y-1.5 pt-1 border-t border-[#3d3a39]/70">
-                        <span className="text-[10px] font-mono uppercase text-[#8b949e] tracking-wider block font-semibold">
-                          Skills & Proficiency ({candidateSkills.length})
-                        </span>
-                        <div className="flex flex-wrap gap-1.5">
-                          {candidateSkills.map((sk) => (
-                            <div
-                              key={sk.name}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] bg-[#111111] border border-[#3d3a39]"
-                            >
-                              <span className="text-[11px] font-medium text-[#f2f2f2]">
-                                {sk.name}
-                              </span>
-                              <span
-                                className={`px-1 py-0.2 rounded-[3px] text-[9px] font-mono font-bold uppercase tracking-wider ${getProficiencyStyle(
-                                  sk.proficiency
-                                )}`}
-                              >
-                                {sk.proficiency}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Rubric Alignment Note */}
-                      <div className="text-[11px] text-[#8b949e] flex items-start gap-1 pt-0.5 line-clamp-2">
-                        <span className="text-[#00d992] font-mono font-semibold whitespace-nowrap">
-                          Rubric:
-                        </span>
-                        <span className="text-[#bdbdbd] leading-relaxed">
-                          {candidate.compatibilityReason}
-                        </span>
+                      {/* Minimal Skill Pills */}
+                      <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                        {candidateSkills.slice(0, 3).map((sk) => (
+                          <span
+                            key={sk.name}
+                            className="inline-flex items-center gap-1 px-2 py-0.5 rounded-[4px] bg-[#111111] border border-[#3d3a39] text-[10.5px] font-mono"
+                          >
+                            <span className="text-[#f2f2f2]">{sk.name}</span>
+                            <span className={`px-1 py-0.2 rounded-[3px] text-[8.5px] font-mono font-bold uppercase ${getProficiencyStyle(sk.proficiency)}`}>
+                              {sk.proficiency}
+                            </span>
+                          </span>
+                        ))}
+                        {candidateSkills.length > 3 && (
+                          <span className="text-[10px] font-mono text-[#8b949e] px-1.5 py-0.5 rounded bg-[#101010] border border-[#3d3a39]">
+                            +{candidateSkills.length - 3} more
+                          </span>
+                        )}
                       </div>
                     </div>
 
-                    {/* Card Footer: Preferred Format & Action Button */}
-                    <div className="pt-3 border-t border-[#3d3a39]/70 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                      <div className="flex items-center gap-1 text-[11px] font-mono text-[#8b949e] truncate">
-                        <span className="text-[#00d992]">Format:</span>
-                        <span className="truncate">{candidate.preferredFormat}</span>
-                      </div>
+                    {/* Card Footer */}
+                    <div className="pt-3 border-t border-[#3d3a39]/70 flex items-center justify-between gap-2.5">
+                      <span className="text-xs font-semibold text-[#2fd6a1] group-hover:text-[#00d992] transition-colors flex items-center gap-1">
+                        <span>View Details</span>
+                        <span>→</span>
+                      </span>
 
                       <button
-                        onClick={() => setSelectedCandidate(candidate)}
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSelectedCandidate(candidate);
+                        }}
                         className="inline-flex items-center justify-center font-semibold rounded-[6px] bg-[#00d992] text-[#101010] hover:bg-[#2fd6a1] transition-all text-xs px-3.5 py-1.5 cursor-pointer shadow-xs whitespace-nowrap"
                       >
                         Invite
@@ -691,6 +828,16 @@ export default function BrowseInterviewsPage() {
           )}
         </main>
       </div>
+
+      {/* Modal: View Candidate Details */}
+      {viewingCandidate && (
+        <CandidateDetailModal
+          candidate={viewingCandidate}
+          onClose={() => setViewingCandidate(null)}
+          onInvite={(cand) => setSelectedCandidate(cand)}
+          getProficiencyStyle={getProficiencyStyle}
+        />
+      )}
 
       {/* Modal: Invite Candidate */}
       {selectedCandidate && (

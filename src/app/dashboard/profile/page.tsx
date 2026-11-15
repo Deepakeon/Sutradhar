@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useApp } from '@/context/AppContext';
+import { useProfile } from '@/hooks/use-profile';
 import { UserProfileEditorModal } from '@/components/user/UserProfileEditorModal';
 import { SkillProficiency, JobDescription, JDSkillItem, SkillImportance } from '@/types';
 
@@ -209,14 +210,17 @@ function SkillBucket({
 }
 
 export default function ProfilePage() {
+  const { matchingCandidates, showToast } = useApp();
   const {
+    profile,
     currentUser,
-    updateUserProfile,
-    matchingCandidates,
-    showToast
-  } = useApp();
-
-  const profile = currentUser.interviewerProfile;
+    isLoading,
+    isSaving,
+    isSynced,
+    createJobDescription,
+    deleteJobDescription,
+    deleteSkill
+  } = useProfile();
 
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editorSection, setEditorSection] = useState<'context' | 'skill' | 'credentials'>('context');
@@ -276,25 +280,17 @@ export default function ProfilePage() {
       createdAt: new Date().toISOString().split('T')[0]
     };
 
-    const currentJDs = profile.jobDescriptions || [];
-    updateUserProfile({
-      jobDescriptions: [newJD, ...currentJDs]
-    });
+    createJobDescription(newJD);
 
     setJdRoleTitle('');
     setJdNote('');
     setJdTiming('');
     setJdSkills([]);
     setIsCreatingJD(false);
-    showToast('Job Description created successfully', 'success');
   };
 
   const handleDeleteJD = (jdId: string) => {
-    const currentJDs = profile.jobDescriptions || [];
-    updateUserProfile({
-      jobDescriptions: currentJDs.filter((j) => j.id !== jdId)
-    });
-    showToast('Job Description removed', 'info');
+    deleteJobDescription(jdId);
   };
 
   const getImportanceBadgeStyle = (classification: SkillImportance) => {
@@ -311,10 +307,7 @@ export default function ProfilePage() {
   };
 
   const handleDeleteSkill = (skillId: string) => {
-    updateUserProfile({
-      skills: profile.skills.filter((s) => s.id !== skillId)
-    });
-    showToast('Skill removed from profile', 'info');
+    deleteSkill(skillId);
   };
 
   const getProficiencyBadgeStyle = (proficiency?: SkillProficiency | string) => {
@@ -330,18 +323,32 @@ export default function ProfilePage() {
     }
   };
 
-  // Fallbacks if user profile has empty fields
-  const headline = profile.headline || 'Senior Distributed Systems Engineer targeting Staff / Principal Roles';
-  const objectives = profile.objectives || 'Transitioning from Senior to Staff level at top-tier distributed data infrastructure companies. Honing deep system design trade-offs, catastrophic failure scenarios, and multi-tenant partitioning strategies.';
-  const targetRoles = profile.targetRoles && profile.targetRoles.length > 0
-    ? profile.targetRoles
+  // Fallbacks if user profile has empty fields - strictly sanitize against non-string objects {}
+  const headline = (typeof profile.headline === 'string' && profile.headline.trim())
+    ? profile.headline
+    : 'Senior Distributed Systems Engineer targeting Staff / Principal Roles';
+
+  const objectives = (typeof profile.objectives === 'string' && profile.objectives.trim())
+    ? profile.objectives
+    : 'Transitioning from Senior to Staff level at top-tier distributed data infrastructure companies. Honing deep system design trade-offs, catastrophic failure scenarios, and multi-tenant partitioning strategies.';
+
+  const rawRoles = Array.isArray(profile.targetRoles) ? profile.targetRoles : [];
+  const safeTargetRoles = rawRoles.filter((r): r is string => typeof r === 'string' && r.trim().length > 0);
+  const targetRoles = safeTargetRoles.length > 0
+    ? safeTargetRoles
     : [
         'Staff Distributed Systems Engineer',
         'Principal Infrastructure Architect',
         'Lead Storage Engine Developer'
       ];
-  const timezone = profile.timezone || profile.context?.preferredTimezone || 'America/New_York (UTC-5)';
-  const weeklyAvailability = profile.weeklyAvailability || profile.context?.availabilitySchedule || '8 hours / week';
+
+  const timezone = (typeof profile.timezone === 'string' && profile.timezone.trim())
+    ? profile.timezone
+    : (typeof profile.context?.preferredTimezone === 'string' ? profile.context.preferredTimezone : 'America/New_York (UTC-5)');
+
+  const weeklyAvailability = (typeof profile.weeklyAvailability === 'string' && profile.weeklyAvailability.trim())
+    ? profile.weeklyAvailability
+    : (typeof profile.context?.availabilitySchedule === 'string' ? profile.context.availabilitySchedule : '8 hours / week');
 
   return (
     <div className="space-y-8 animate-in fade-in duration-200">
@@ -409,15 +416,19 @@ export default function ProfilePage() {
               Target Roles
             </span>
             <div className="flex flex-wrap gap-2 mt-2">
-              {targetRoles.map((role) => (
-                <div
-                  key={role}
-                  className="inline-flex items-center gap-2 rounded-[6px] border border-[#3d3a39] bg-[#111111] px-3 py-1.5 text-xs font-medium text-[#f2f2f2]"
-                >
-                  <span className="text-[#00d992]">✦</span>
-                  <span>{role}</span>
-                </div>
-              ))}
+              {targetRoles.map((role) => {
+                const roleText = typeof role === 'string' ? role : '';
+                if (!roleText) return null;
+                return (
+                  <div
+                    key={roleText}
+                    className="inline-flex items-center gap-2 rounded-[6px] border border-[#3d3a39] bg-[#111111] px-3 py-1.5 text-xs font-medium text-[#f2f2f2]"
+                  >
+                    <span className="text-[#00d992]">✦</span>
+                    <span>{roleText}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
 
