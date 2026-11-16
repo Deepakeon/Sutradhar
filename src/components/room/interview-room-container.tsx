@@ -6,10 +6,12 @@ import { createClient } from '@/lib/supabase/client';
 import { RoomParticipant, InterviewRow } from '@/types/interview';
 import { useWebRTC } from '@/hooks/use-webrtc';
 import { useAudioStreamer } from '@/hooks/use-audio-streamer';
+import { useRoomRecording } from '@/hooks/use-room-recording';
 import { RoomHeader } from './room-header';
 import { VideoGrid } from './video-grid';
 import { MediaControls } from './media-controls';
 import { DeviceSettingsModal } from './device-settings-modal';
+import { RecordingPromptModal } from './recording-prompt-modal';
 
 interface InterviewRoomContainerProps {
   interviewId: string;
@@ -188,9 +190,35 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
     sessionStartedAt: interview?.session_started_at,
   });
 
+  // Hook 3: Local OPFS Room Tab Recording
+  const {
+    isPromptOpen: isRecordingPromptOpen,
+    isRecording: isOPFSRecording,
+    recordingDuration: opfsRecordingDuration,
+    isSupported: isRecordingSupported,
+    notification: recordingNotification,
+    startRecording: startOPFSRecording,
+    stopRecording: stopOPFSRecording,
+    dismissPrompt: dismissRecordingPrompt,
+    clearNotification: clearRecordingNotification,
+  } = useRoomRecording({
+    interviewId,
+    localStream,
+    remoteStream,
+    autoPrompt: isRoomActive,
+  });
+
   // Handle Call Wrap-up & Finalization
   const handleWrapUp = useCallback(async () => {
     setCallEndedState((prev) => ({ ...prev, ended: true, isFinalizing: true }));
+
+    if (isOPFSRecording) {
+      try {
+        await stopOPFSRecording();
+      } catch (err) {
+        console.error('Failed to finalize local OPFS recording:', err);
+      }
+    }
 
     try {
       const masterUrl = await finalizeRecording();
@@ -206,7 +234,7 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
         isFinalizing: false,
       });
     }
-  }, [finalizeRecording]);
+  }, [finalizeRecording, isOPFSRecording, stopOPFSRecording]);
 
   const onUserTriggeredEndCall = useCallback(() => {
     executeEndCall();
@@ -308,10 +336,23 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
         interviewId={interviewId}
         currentRole={currentProfile.role}
         peerProfile={peerProfile}
-        isRecording={isRecording}
-        recordingDuration={recordingDuration}
+        isRecording={isOPFSRecording || isRecording}
+        recordingDuration={isOPFSRecording ? opfsRecordingDuration : recordingDuration}
         uploadedChunksCount={uploadedChunksCount}
       />
+
+      {/* Local Tab Recording Notification Banner */}
+      {recordingNotification && (
+        <div className="bg-[#1a1a1a] border-b border-[#3d3a39] px-4 py-2 flex items-center justify-between text-xs text-[#bdbdbd]">
+          <span>{recordingNotification}</span>
+          <button
+            onClick={clearRecordingNotification}
+            className="text-[#8b949e] hover:text-[#f2f2f2] ml-2 text-sm font-bold cursor-pointer"
+          >
+            ×
+          </button>
+        </div>
+      )}
 
       {/* Main Video Stage */}
       <main className="flex-1 flex flex-col justify-center items-center overflow-hidden">
@@ -334,10 +375,20 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
       <MediaControls
         isMicMuted={isMicMuted}
         isCameraOff={isCameraOff}
+        isRecording={isOPFSRecording}
+        isRecordingSupported={isRecordingSupported}
         onToggleMic={toggleMic}
         onToggleCamera={toggleCamera}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onEndCall={onUserTriggeredEndCall}
+        onToggleRecording={isOPFSRecording ? stopOPFSRecording : startOPFSRecording}
+      />
+
+      {/* Pre-call Recording Permission Prompt Modal */}
+      <RecordingPromptModal
+        isOpen={isRecordingPromptOpen}
+        onConfirm={startOPFSRecording}
+        onDismiss={dismissRecordingPrompt}
       />
 
       {/* Settings Modal */}

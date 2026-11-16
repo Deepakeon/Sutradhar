@@ -31,8 +31,8 @@ export function useAudioStreamer({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const chunkIndexRef = useRef<number>(0);
-  const sessionStartedAtMsRef = useRef<number>(Date.now());
-  const lastSliceStartMsRef = useRef<number>(Date.now());
+  const sessionStartedAtMsRef = useRef<number>(0);
+  const lastSliceStartMsRef = useRef<number>(0);
   const webmHeaderBlobRef = useRef<Blob | null>(null);
   const profileIdRef = useRef(profileId);
   const roleRef = useRef(role);
@@ -100,6 +100,10 @@ export function useAudioStreamer({
     };
   }, [isCallActive]);
 
+  const uploadChunkRef = useRef<
+    (blob: Blob, metadata: ChunkUploadMetadata, attempt?: number) => Promise<void>
+  >(null as any);
+
   // In-memory chunk dispatch with exponential backoff retry
   const uploadChunkWithRetry = useCallback(
     async (
@@ -136,7 +140,7 @@ export function useAudioStreamer({
         if (attempt < maxRetries) {
           const backoffDelay = Math.min(1000 * Math.pow(2, attempt - 1), 8000);
           setTimeout(() => {
-            uploadChunkWithRetry(blob, metadata, attempt + 1);
+            uploadChunkRef.current?.(blob, metadata, attempt + 1);
           }, backoffDelay);
         } else {
           const message =
@@ -150,6 +154,10 @@ export function useAudioStreamer({
     },
     []
   );
+
+  useEffect(() => {
+    uploadChunkRef.current = uploadChunkWithRetry;
+  }, [uploadChunkWithRetry]);
 
   // Initialize and tear down MediaRecorder on isolated local microphone stream
   useEffect(() => {
@@ -246,7 +254,9 @@ export function useAudioStreamer({
       recorder.start(10000);
     } catch (err: unknown) {
       console.error('Failed to initialize MediaRecorder:', err);
-      setError('Failed to start audio recording from microphone');
+      setTimeout(() => {
+        setError('Failed to start audio recording from microphone');
+      }, 0);
     }
 
     return () => {

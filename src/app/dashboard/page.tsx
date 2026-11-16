@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import type { Profile } from '@/types/profile';
+import { DashboardInterviews } from '@/components/dashboard/dashboard-interviews';
 
 export const metadata = {
   title: 'Dashboard — Sutradhar',
@@ -21,6 +22,30 @@ async function DashboardContent() {
 
   const { data: profileData } = await supabase.rpc('get_my_profile');
   const profile = profileData as unknown as Profile | null;
+
+  const { data: interviewsData } = await supabase
+    .schema('private')
+    .from('interviews')
+    .select('*')
+    .or(`candidate_id.eq.${user.id},interviewer_id.eq.${user.id}`)
+    .order('created_at', { ascending: false });
+
+  const mappedInterviews = (interviewsData || []).map(
+    (inv: {
+      id: string;
+      title?: string | null;
+      status: string;
+      candidate_id: string;
+      interviewer_id: string;
+      scheduled_at?: string | null;
+    }) => ({
+      id: inv.id,
+      title: inv.title || 'Technical Interview',
+      status: inv.status,
+      role: inv.candidate_id === user.id ? 'candidate' : 'interviewer',
+      date: inv.scheduled_at ? new Date(inv.scheduled_at).toLocaleDateString() : undefined,
+    })
+  );
 
   return (
     <div className="space-y-6">
@@ -60,6 +85,9 @@ async function DashboardContent() {
           )}
         </div>
       </div>
+
+      {/* Local Interviews & Recordings Section */}
+      <DashboardInterviews initialInterviews={mappedInterviews} />
     </div>
   );
 }
