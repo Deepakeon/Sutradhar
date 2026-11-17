@@ -138,6 +138,19 @@ export function encodeId(id: number): Uint8Array {
 }
 
 /**
+ * Creates a raw EBML element given an ID and payload bytes.
+ */
+export function createRawElement(id: number, payload: Uint8Array): Uint8Array {
+  const idBuf = encodeId(id);
+  const sizeBuf = writeVint(payload.length);
+  const res = new Uint8Array(idBuf.length + sizeBuf.length + payload.length);
+  res.set(idBuf, 0);
+  res.set(sizeBuf, idBuf.length);
+  res.set(payload, idBuf.length + sizeBuf.length);
+  return res;
+}
+
+/**
  * Creates a Master element containing child elements.
  */
 export function createMasterElement(id: number, children: Uint8Array[]): Uint8Array {
@@ -160,7 +173,6 @@ export function createMasterElement(id: number, children: Uint8Array[]): Uint8Ar
  * Creates an unsigned integer EBML element.
  */
 export function createUIntElement(id: number, value: number): Uint8Array {
-  const idBuf = encodeId(id);
   let valBytes: Uint8Array;
   if (value < 256) {
     valBytes = new Uint8Array([value]);
@@ -172,41 +184,24 @@ export function createUIntElement(id: number, value: number): Uint8Array {
     valBytes = new Uint8Array(4);
     new DataView(valBytes.buffer).setUint32(0, value, false);
   }
-  const sizeBuf = writeVint(valBytes.length);
-  const res = new Uint8Array(idBuf.length + sizeBuf.length + valBytes.length);
-  res.set(idBuf, 0);
-  res.set(sizeBuf, idBuf.length);
-  res.set(valBytes, idBuf.length + sizeBuf.length);
-  return res;
+  return createRawElement(id, valBytes);
 }
 
 /**
  * Creates a Float EBML element (Float64 by default).
  */
 export function createFloatElement(id: number, value: number): Uint8Array {
-  const idBuf = encodeId(id);
   const valBytes = new Uint8Array(8);
   new DataView(valBytes.buffer).setFloat64(0, value, false);
-  const sizeBuf = writeVint(8);
-  const res = new Uint8Array(idBuf.length + sizeBuf.length + 8);
-  res.set(idBuf, 0);
-  res.set(sizeBuf, idBuf.length);
-  res.set(valBytes, idBuf.length + sizeBuf.length);
-  return res;
+  return createRawElement(id, valBytes);
 }
 
 /**
  * Creates a String EBML element (UTF-8).
  */
 export function createStringElement(id: number, text: string): Uint8Array {
-  const idBuf = encodeId(id);
   const valBytes = new TextEncoder().encode(text);
-  const sizeBuf = writeVint(valBytes.length);
-  const res = new Uint8Array(idBuf.length + sizeBuf.length + valBytes.length);
-  res.set(idBuf, 0);
-  res.set(sizeBuf, idBuf.length);
-  res.set(valBytes, idBuf.length + sizeBuf.length);
-  return res;
+  return createRawElement(id, valBytes);
 }
 
 export interface WebMInspection {
@@ -451,12 +446,9 @@ export function scanClusters(bytes: Uint8Array): ClusterInfo[] {
 }
 
 /**
- * Calculates total media duration in milliseconds based on cluster timestamps.
+ * Calculates total media duration in cluster TimecodeScale ticks.
  */
-export function calculateDurationFromClusters(
-  clusters: ClusterInfo[],
-  timecodeScale = 1000000
-): number {
+export function calculateDurationFromClusters(clusters: ClusterInfo[]): number {
   if (clusters.length === 0) return 0;
   let maxTime = 0;
   for (const c of clusters) {
@@ -464,9 +456,7 @@ export function calculateDurationFromClusters(
       maxTime = c.maxBlockTimecode;
     }
   }
-  // Convert from TimecodeScale ticks (default 1,000,000ns = 1ms) to ms
-  const scaleRatio = timecodeScale / 1000000;
-  return Math.round(maxTime * scaleRatio);
+  return maxTime;
 }
 
 /**
@@ -508,12 +498,7 @@ export function generateSeekHead(
 ): Uint8Array {
   function makeSeek(id: number, pos: number) {
     const idBytes = encodeId(id);
-    const seekIdElem = new Uint8Array([
-      0x53,
-      0xab,
-      ...writeVint(idBytes.length),
-      ...idBytes,
-    ]);
+    const seekIdElem = createRawElement(EBML_ID.SeekID, idBytes);
     const seekPosElem = createUIntElement(EBML_ID.SeekPosition, pos);
     return createMasterElement(EBML_ID.Seek, [seekIdElem, seekPosElem]);
   }
@@ -543,10 +528,11 @@ export function patchWebMWithDurationAndCues(
     return source; // No media clusters to patch
   }
 
-  const durationMs =
+  const scaleRatio = inspection.timecodeScale / 1000000;
+  const durationTicks =
     knownDurationMs !== undefined && knownDurationMs > 0
-      ? knownDurationMs
-      : calculateDurationFromClusters(clusters, inspection.timecodeScale);
+      ? Math.round(knownDurationMs / scaleRatio)
+      : calculateDurationFromClusters(clusters);
 
   // 1. Extract EBML Header bytes
   const ebmlHeaderBytes = source.subarray(0, inspection.ebmlHeaderSize);
@@ -571,10 +557,10 @@ export function patchWebMWithDurationAndCues(
     offset += totalElemLen;
   }
 
-  // Construct patched Info element with injected Float64 Duration
+  // Construct patched Info element with injected Float64 Duration in TimecodeScale units
   const infoChildren: Uint8Array[] = [
     createUIntElement(EBML_ID.TimecodeScale, inspection.timecodeScale),
-    createFloatElement(EBML_ID.Duration, durationMs),
+    createFloatElement(EBML_ID.Duration, durationTicks),
   ];
   if (infoBytes) {
     // Preserve other Info fields (e.g. MuxingApp, WritingApp) while skipping existing TimecodeScale / Duration

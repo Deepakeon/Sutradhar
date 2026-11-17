@@ -29,6 +29,8 @@ export interface RecordingMetadata {
 export class RecordingSession {
   private writable: FileSystemWritableFileStream | null = null;
   private closed = false;
+  private chunkCount = 0;
+  private fileSizeBytes = 0;
 
   constructor(
     public readonly interviewId: string,
@@ -56,7 +58,9 @@ export class RecordingSession {
     }
 
     await this.writable.write(payload as unknown as FileSystemWriteChunkType);
-    await this.storage.incrementChunkMetadata(this.interviewId, payload.length);
+    this.chunkCount += 1;
+    this.fileSizeBytes += payload.length;
+    await this.storage.updateSessionMetadata(this.interviewId, this.chunkCount, this.fileSizeBytes);
   }
 
   /**
@@ -79,6 +83,8 @@ export class RecordingSession {
       }
       this.writable = null;
       this.closed = true;
+      // Ensure latest chunk count and size are flushed to metadata
+      await this.storage.updateSessionMetadata(this.interviewId, this.chunkCount, this.fileSizeBytes);
     }
   }
 }
@@ -159,6 +165,46 @@ export class OpfsRecordingStorage {
     interviewId: string,
     knownDurationMs?: number
   ): Promise<RecordingMetadata> {
+    return await this.patchAndPersist(interviewId, 'finalized', knownDurationMs);
+  }
+
+  /**
+   * Checks whether a recording was interrupted mid-stream or crashed before finalization.
+   */
+  async isRecordingInterrupted(interviewId: string): Promise<boolean> {
+    const hasRec = await this.hasRecording(interviewId);
+    if (!hasRec) return false;
+
+    const meta = await this.getRecordingMetadata(interviewId);
+    if (meta && meta.status === 'recording') return true;
+
+    const file = await this.getRecordingFile(interviewId);
+    if (!file) return false;
+
+    const rawBuffer = new Uint8Array(await file.arrayBuffer());
+    const inspection = inspectWebM(rawBuffer);
+    return !inspection.isSeekable;
+  }
+
+  /**
+   * Inspects an unfinalized or interrupted recording, recovers captured minutes, and injects seek cues.
+   */
+  async recoverRecording(interviewId: string): Promise<RecordingMetadata | null> {
+    const isInterrupted = await this.isRecordingInterrupted(interviewId);
+    if (!isInterrupted) {
+      return await this.getRecordingMetadata(interviewId);
+    }
+    return await this.patchAndPersist(interviewId, 'repaired');
+  }
+
+  /**
+   * Shared helper to patch WebM headers and persist updated status and metadata.
+   */
+  private async patchAndPersist(
+    interviewId: string,
+    targetStatus: RecordingStatus,
+    knownDurationMs?: number
+  ): Promise<RecordingMetadata> {
     const dir = await this.getInterviewDirectory(interviewId, false);
     const fileHandle = await dir.getFileHandle('recording.webm');
     const file = await fileHandle.getFile();
@@ -176,7 +222,7 @@ export class OpfsRecordingStorage {
     const existingMeta = await this.getRecordingMetadata(interviewId);
     const updatedMeta: RecordingMetadata = {
       interviewId,
-      status: 'finalized',
+      status: targetStatus,
       createdAt: existingMeta?.createdAt || Date.now(),
       updatedAt: Date.now(),
       durationMs: inspection.durationMs || knownDurationMs || 0,
@@ -191,49 +237,6 @@ export class OpfsRecordingStorage {
   }
 
   /**
-   * Inspects an unfinalized or interrupted recording, recovers captured minutes, and injects seek cues.
-   */
-  async recoverRecording(interviewId: string): Promise<RecordingMetadata | null> {
-    const hasRec = await this.hasRecording(interviewId);
-    if (!hasRec) return null;
-
-    const dir = await this.getInterviewDirectory(interviewId, false);
-    const meta = await this.getRecordingMetadata(interviewId);
-    const fileHandle = await dir.getFileHandle('recording.webm');
-    const file = await fileHandle.getFile();
-    const rawBytes = new Uint8Array(await file.arrayBuffer());
-    const inspection = inspectWebM(rawBytes);
-
-    // If recording is already cleanly finalized and seekable, no repair needed
-    if (meta?.status === 'finalized' && inspection.isSeekable) {
-      return meta;
-    }
-
-    // Repair partial / unfinalized recording
-    const repairedBytes = patchWebMWithDurationAndCues(rawBytes);
-    const repairedInspection = inspectWebM(repairedBytes);
-
-    const writable = await fileHandle.createWritable({ keepExistingData: false });
-    await writable.write(repairedBytes as unknown as FileSystemWriteChunkType);
-    await writable.close();
-
-    const repairedMeta: RecordingMetadata = {
-      interviewId,
-      status: 'repaired',
-      createdAt: meta?.createdAt || Date.now(),
-      updatedAt: Date.now(),
-      durationMs: repairedInspection.durationMs,
-      fileSizeBytes: repairedBytes.length,
-      chunkCount: meta?.chunkCount || 1,
-      isSeekable: repairedInspection.isSeekable,
-      mimeType: 'video/webm',
-    };
-
-    await this.saveMetadata(dir, repairedMeta);
-    return repairedMeta;
-  }
-
-  /**
    * Retrieves the interview recording as a standard Web File object for video playback or export.
    */
   async getRecordingFile(interviewId: string): Promise<File | null> {
@@ -244,6 +247,15 @@ export class OpfsRecordingStorage {
     } catch {
       return null;
     }
+  }
+
+  /**
+   * Retrieves the interview recording as a Blob object for export or download.
+   */
+  async getRecordingBlob(interviewId: string): Promise<Blob | null> {
+    const file = await this.getRecordingFile(interviewId);
+    if (!file) return null;
+    return file.slice(0, file.size, file.type || 'video/webm');
   }
 
   /**
@@ -286,7 +298,11 @@ export class OpfsRecordingStorage {
       const interviewsDir = await root.getDirectoryHandle('interviews', { create: false });
 
       // Async iteration across subdirectories
-      const entriesIterator = (interviewsDir as unknown as { entries(): AsyncIterable<[string, FileSystemHandle]> }).entries();
+      const entriesIterator = (
+        interviewsDir as unknown as {
+          entries(): AsyncIterable<[string, FileSystemHandle]>;
+        }
+      ).entries();
       for await (const [id, handle] of entriesIterator) {
         if (handle.kind === 'directory') {
           const meta = await this.getRecordingMetadata(id);
@@ -318,13 +334,17 @@ export class OpfsRecordingStorage {
   /**
    * Internal helper to update metadata with new chunk size and count.
    */
-  async incrementChunkMetadata(interviewId: string, chunkSize: number): Promise<void> {
+  async updateSessionMetadata(
+    interviewId: string,
+    chunkCount: number,
+    fileSizeBytes: number
+  ): Promise<void> {
     try {
       const dir = await this.getInterviewDirectory(interviewId, false);
       const meta = await this.getRecordingMetadata(interviewId);
       if (meta) {
-        meta.chunkCount += 1;
-        meta.fileSizeBytes += chunkSize;
+        meta.chunkCount = chunkCount;
+        meta.fileSizeBytes = fileSizeBytes;
         meta.updatedAt = Date.now();
         await this.saveMetadata(dir, meta);
       }
@@ -340,188 +360,9 @@ export class OpfsRecordingStorage {
     const handle = await dir.getFileHandle('meta.json', { create: true });
     const writable = await handle.createWritable({ keepExistingData: false });
     const jsonStr = JSON.stringify(meta, null, 2);
-    await writable.write(new TextEncoder().encode(jsonStr) as unknown as FileSystemWriteChunkType);
+    await writable.write(
+      new TextEncoder().encode(jsonStr) as unknown as FileSystemWriteChunkType
+    );
     await writable.close();
-  }
-}
-
-/**
- * --------------------------------------------------------------------------
- * In-Memory OPFS Mock for Testing & Non-Browser Environments
- * --------------------------------------------------------------------------
- */
-export function createMockOpfsRoot(): FileSystemDirectoryHandle {
-  return new MockDirectoryHandle('') as unknown as FileSystemDirectoryHandle;
-}
-
-class MockWritableStream implements FileSystemWritableFileStream {
-  readonly locked = false;
-  private position = 0;
-  private closed = false;
-
-  constructor(private readonly fileHandle: MockFileHandle) {}
-
-  async write(data: FileSystemWriteChunkType | BufferSource | Blob | string): Promise<void> {
-    if (this.closed) throw new Error('WritableStream is closed');
-    let bytes: Uint8Array;
-    if (ArrayBuffer.isView(data)) {
-      bytes = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
-    } else if (data instanceof ArrayBuffer || (data && typeof (data as unknown as ArrayBuffer).byteLength === 'number' && typeof (data as unknown as ArrayBuffer).slice === 'function')) {
-      bytes = new Uint8Array(data as unknown as ArrayBuffer);
-    } else if (data && typeof (data as unknown as Blob).arrayBuffer === 'function') {
-      bytes = new Uint8Array(await (data as unknown as Blob).arrayBuffer());
-    } else {
-      bytes = new Uint8Array(0);
-    }
-
-    const newLen = Math.max(this.fileHandle.buffer.length, this.position + bytes.length);
-    const newBuf = new Uint8Array(newLen);
-    newBuf.set(this.fileHandle.buffer, 0);
-    newBuf.set(bytes, this.position);
-    this.fileHandle.buffer = newBuf;
-    this.position += bytes.length;
-  }
-
-  async seek(position: number): Promise<void> {
-    this.position = position;
-  }
-
-  async truncate(size: number): Promise<void> {
-    this.fileHandle.buffer = this.fileHandle.buffer.subarray(0, size);
-    if (this.position > size) this.position = size;
-  }
-
-  async close(): Promise<void> {
-    this.closed = true;
-  }
-
-  abort(): Promise<void> {
-    this.closed = true;
-    return Promise.resolve();
-  }
-
-  getWriter(): WritableStreamDefaultWriter<FileSystemWriteChunkType> {
-    throw new Error('Not implemented');
-  }
-}
-
-class MockFileHandle implements FileSystemFileHandle {
-  readonly kind = 'file' as const;
-  public buffer = new Uint8Array(0);
-
-  constructor(public readonly name: string) {}
-
-  async getFile(): Promise<File> {
-    const mime = this.name.endsWith('.webm') ? 'video/webm' : 'application/json';
-    return new File([this.buffer.slice()], this.name, { type: mime });
-  }
-
-  async createWritable(options?: FileSystemCreateWritableOptions): Promise<FileSystemWritableFileStream> {
-    if (!options?.keepExistingData) {
-      this.buffer = new Uint8Array(0);
-    }
-    return new MockWritableStream(this);
-  }
-
-  isSameEntry(other: FileSystemHandle): Promise<boolean> {
-    return Promise.resolve(other === this);
-  }
-
-  queryPermission(): Promise<PermissionState> {
-    return Promise.resolve('granted');
-  }
-
-  requestPermission(): Promise<PermissionState> {
-    return Promise.resolve('granted');
-  }
-}
-
-class MockDirectoryHandle implements FileSystemDirectoryHandle {
-  readonly kind = 'directory' as const;
-  private entriesMap = new Map<string, MockDirectoryHandle | MockFileHandle>();
-
-  constructor(public readonly name: string) {}
-
-  async getDirectoryHandle(
-    name: string,
-    options?: FileSystemGetDirectoryOptions
-  ): Promise<FileSystemDirectoryHandle> {
-    const existing = this.entriesMap.get(name);
-    if (existing) {
-      if (existing.kind !== 'directory') {
-        throw new Error(`Entry ${name} is a file, not a directory`);
-      }
-      return existing as unknown as FileSystemDirectoryHandle;
-    }
-    if (options?.create) {
-      const created = new MockDirectoryHandle(name);
-      this.entriesMap.set(name, created);
-      return created as unknown as FileSystemDirectoryHandle;
-    }
-    throw new Error(`Directory ${name} not found`);
-  }
-
-  async getFileHandle(
-    name: string,
-    options?: FileSystemGetFileOptions
-  ): Promise<FileSystemFileHandle> {
-    const existing = this.entriesMap.get(name);
-    if (existing) {
-      if (existing.kind !== 'file') {
-        throw new Error(`Entry ${name} is a directory, not a file`);
-      }
-      return existing as unknown as FileSystemFileHandle;
-    }
-    if (options?.create) {
-      const created = new MockFileHandle(name);
-      this.entriesMap.set(name, created);
-      return created as unknown as FileSystemFileHandle;
-    }
-    throw new Error(`File ${name} not found`);
-  }
-
-  async removeEntry(name: string): Promise<void> {
-    if (!this.entriesMap.has(name)) {
-      throw new Error(`Entry ${name} not found`);
-    }
-    this.entriesMap.delete(name);
-  }
-
-  async *entries(): AsyncIterableIterator<[string, FileSystemHandle]> {
-    for (const [key, value] of this.entriesMap.entries()) {
-      yield [key, value as unknown as FileSystemHandle];
-    }
-  }
-
-  async *keys(): AsyncIterableIterator<string> {
-    for (const key of this.entriesMap.keys()) {
-      yield key;
-    }
-  }
-
-  async *values(): AsyncIterableIterator<FileSystemHandle> {
-    for (const val of this.entriesMap.values()) {
-      yield val as unknown as FileSystemHandle;
-    }
-  }
-
-  [Symbol.asyncIterator](): AsyncIterableIterator<[string, FileSystemHandle]> {
-    return this.entries();
-  }
-
-  isSameEntry(other: FileSystemHandle): Promise<boolean> {
-    return Promise.resolve(other === this);
-  }
-
-  queryPermission(): Promise<PermissionState> {
-    return Promise.resolve('granted');
-  }
-
-  requestPermission(): Promise<PermissionState> {
-    return Promise.resolve('granted');
-  }
-
-  resolve(): Promise<string[] | null> {
-    return Promise.resolve(null);
   }
 }

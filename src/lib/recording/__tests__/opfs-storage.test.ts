@@ -1,8 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import {
-  OpfsRecordingStorage,
-  createMockOpfsRoot,
-} from '../opfs-storage';
+import { OpfsRecordingStorage } from '../opfs-storage';
+import { createMockOpfsRoot } from './mocks/opfs-mock';
 import {
   EBML_ID,
   createMasterElement,
@@ -108,6 +106,12 @@ describe('OPFS Recording Storage Core', () => {
     expect(file?.name).toBe('recording.webm');
     expect(file?.type).toBe('video/webm');
 
+    // Verify Blob retrieval
+    const blob = await storage.getRecordingBlob(interviewId);
+    expect(blob).not.toBeNull();
+    expect(blob?.size).toBe(file?.size);
+    expect(blob?.type).toBe('video/webm');
+
     const fileBytes = new Uint8Array(await file!.arrayBuffer());
     const inspection = inspectWebM(fileBytes);
     expect(inspection.hasEBMLHeader).toBe(true);
@@ -133,6 +137,7 @@ describe('OPFS Recording Storage Core', () => {
     const initialMeta = await storage.getRecordingMetadata(interviewId);
     expect(initialMeta?.status).toBe('recording');
     expect(initialMeta?.isSeekable).toBe(false);
+    expect(await storage.isRecordingInterrupted(interviewId)).toBe(true);
 
     // Trigger auto-recovery routine (e.g. when Dashboard loads)
     const recoveredMeta = await storage.recoverRecording(interviewId);
