@@ -203,9 +203,17 @@ export class OpfsRecordingStorage {
     const file = await fileHandle.getFile();
     const rawBuffer = new Uint8Array(await file.arrayBuffer());
 
-    // Patch WebM container with duration, seekhead, and cues
-    const patchedBuffer = patchWebMWithDurationAndCues(rawBuffer, knownDurationMs);
-    const inspection = inspectWebM(patchedBuffer);
+    let patchedBuffer: Uint8Array = rawBuffer;
+    let inspection = inspectWebM(rawBuffer);
+
+    if (rawBuffer.length > 0) {
+      try {
+        patchedBuffer = patchWebMWithDurationAndCues(rawBuffer, knownDurationMs);
+        inspection = inspectWebM(patchedBuffer);
+      } catch {
+        // Fallback for premature stop or non-standard container before EBML parsing
+      }
+    }
 
     // Overwrite the file in OPFS with seekable metadata
     const writable = await fileHandle.createWritable({ keepExistingData: false });
@@ -361,4 +369,66 @@ export class OpfsRecordingStorage {
     );
     await writable.close();
   }
+}
+
+let defaultStorageInstance: OpfsRecordingStorage | null = null;
+
+export function getOpfsStorage(): OpfsRecordingStorage {
+  if (!defaultStorageInstance) {
+    defaultStorageInstance = new OpfsRecordingStorage();
+  }
+  return defaultStorageInstance;
+}
+
+export function setOpfsStorage(storage: OpfsRecordingStorage | null): void {
+  defaultStorageInstance = storage;
+}
+
+const activeWriters = new Map<string, OpfsRecordingWriter>();
+
+export function getActiveRecordingWriter(interviewId: string): OpfsRecordingWriter | undefined {
+  return activeWriters.get(interviewId);
+}
+
+export function setActiveRecordingWriter(interviewId: string, writer: OpfsRecordingWriter): void {
+  activeWriters.set(interviewId, writer);
+}
+
+export function removeActiveRecordingWriter(interviewId: string): void {
+  activeWriters.delete(interviewId);
+}
+
+/**
+ * Convenience helper to append a chunk to the active OPFS recording session.
+ * Initializes a new writer if one does not already exist for the interviewId.
+ */
+export async function appendChunkToRecording(
+  interviewId: string,
+  chunk: Blob,
+  storage?: OpfsRecordingStorage
+): Promise<void> {
+  const store = storage || getOpfsStorage();
+  let writer = activeWriters.get(interviewId);
+  if (!writer) {
+    writer = await store.startRecording(interviewId);
+    activeWriters.set(interviewId, writer);
+  }
+  await writer.appendChunk(chunk);
+}
+
+/**
+ * Convenience helper to finalize an active OPFS recording session and patch EBML metadata.
+ */
+export async function finalizeRecording(
+  interviewId: string,
+  knownDurationMs?: number,
+  storage?: OpfsRecordingStorage
+): Promise<RecordingMetadata> {
+  const store = storage || getOpfsStorage();
+  const writer = activeWriters.get(interviewId);
+  if (writer) {
+    activeWriters.delete(interviewId);
+    return await writer.finalize(knownDurationMs);
+  }
+  return await store.finalizeRecording(interviewId, knownDurationMs);
 }

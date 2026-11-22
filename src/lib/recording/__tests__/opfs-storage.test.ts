@@ -1,5 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { OpfsRecordingStorage } from '../opfs-storage';
+import {
+  OpfsRecordingStorage,
+  appendChunkToRecording,
+  finalizeRecording,
+} from '../opfs-storage';
 import { createMockOpfsRoot } from './mocks/opfs-mock';
 import {
   EBML_ID,
@@ -191,5 +195,32 @@ describe('OPFS Recording Storage Core', () => {
     expect(await storage.hasRecording(interviewId)).toBe(false);
     expect(await storage.getRecordingFile(interviewId)).toBeNull();
     expect(await storage.getRecordingMetadata(interviewId)).toBeNull();
+  });
+
+  it('streams chunks sequentially and finalizes via appendChunkToRecording and finalizeRecording helpers', async () => {
+    const interviewId = 'interview-helper-session';
+    const { chunk0, chunk1, chunk2 } = buildSyntheticChunks();
+
+    // Stream chunks sequentially using standalone helper
+    await appendChunkToRecording(interviewId, chunk0, storage);
+    let meta = await storage.getRecordingMetadata(interviewId);
+    expect(meta?.status).toBe('recording');
+    expect(meta?.chunkCount).toBe(1);
+
+    await appendChunkToRecording(interviewId, chunk1, storage);
+    await appendChunkToRecording(interviewId, chunk2, storage);
+
+    meta = await storage.getRecordingMetadata(interviewId);
+    expect(meta?.chunkCount).toBe(3);
+    expect(meta?.fileSizeBytes).toBe(chunk0.size + chunk1.size + chunk2.size);
+
+    // Finalize recording using standalone helper
+    const finalized = await finalizeRecording(interviewId, 3000, storage);
+    expect(finalized.status).toBe('finalized');
+    expect(finalized.isSeekable).toBe(true);
+    expect(finalized.durationMs).toBe(3000);
+
+    const file = await storage.getRecordingFile(interviewId);
+    expect(file).not.toBeNull();
   });
 });
