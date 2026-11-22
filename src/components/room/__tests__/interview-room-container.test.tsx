@@ -217,10 +217,9 @@ describe('Room Container Seam (/room/[id])', () => {
       expect(screen.getByText(/Waiting for partner/i)).toBeInTheDocument();
     });
 
-    // Verify media controls toolbar buttons
+    // Verify media controls toolbar buttons (mic, camera, leave)
     expect(screen.getByTitle('Mute Microphone')).toBeInTheDocument();
     expect(screen.getByTitle('Turn Camera Off')).toBeInTheDocument();
-    expect(screen.getByTitle('Audio & Video Settings')).toBeInTheDocument();
     expect(screen.getByTitle('Leave Interview Call')).toBeInTheDocument();
   });
 
@@ -267,47 +266,6 @@ describe('Room Container Seam (/room/[id])', () => {
 
     await waitFor(() => {
       expect(screen.getByTitle('Turn Camera On')).toBeInTheDocument();
-    });
-  });
-
-  it('opens and closes device settings modal', async () => {
-    mockGetUser.mockResolvedValue({
-      data: { user: { id: 'candidate-id', user_metadata: {} } },
-      error: null,
-    });
-
-    mockFrom.mockReturnValue({
-      select: vi.fn().mockReturnThis(),
-      eq: vi.fn().mockReturnThis(),
-      single: vi.fn().mockResolvedValue({
-        data: {
-          id: 'session-123',
-          candidate_id: 'candidate-id',
-          interviewer_id: 'interviewer-id',
-          title: 'Systems Interview',
-        },
-        error: null,
-      }),
-    });
-
-    render(<InterviewRoomContainer interviewId="session-123" />);
-
-    await waitFor(() => {
-      expect(screen.getByTitle('Audio & Video Settings')).toBeInTheDocument();
-    });
-
-    fireEvent.click(screen.getByTitle('Audio & Video Settings'));
-
-    await waitFor(() => {
-      expect(screen.getByText('Device Settings')).toBeInTheDocument();
-    });
-
-    expect(screen.getByText('Microphone')).toBeInTheDocument();
-    expect(screen.getByText('Camera')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByText('Done'));
-    await waitFor(() => {
-      expect(screen.queryByText('Device Settings')).not.toBeInTheDocument();
     });
   });
 

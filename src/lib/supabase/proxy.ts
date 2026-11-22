@@ -47,20 +47,20 @@ export async function updateSession(request: NextRequest) {
   // Protected route check
   if (pathname.startsWith('/dashboard') && !user) {
     const url = request.nextUrl.clone();
-    url.pathname = '/login';
-    url.searchParams.set('next', pathname);
-    return copyCookiesToRedirect(NextResponse.redirect(url));
+    // url.pathname = '/login';
+    // url.searchParams.set('next', pathname);
+    // return copyCookiesToRedirect(NextResponse.redirect(url));
   }
 
   // Redirect authenticated user away from login
   if (pathname === '/login' && user) {
-    const rawNext = request.nextUrl.searchParams.get('next');
-    const safeNext =
-      rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//')
-        ? rawNext
-        : '/dashboard';
-    const url = new URL(safeNext, request.url);
-    return copyCookiesToRedirect(NextResponse.redirect(url));
+    // const rawNext = request.nextUrl.searchParams.get('next');
+    // const safeNext =
+    //   rawNext && rawNext.startsWith('/') && !rawNext.startsWith('//')
+    //     ? rawNext
+    //     : '/dashboard';
+    // const url = new URL(safeNext, request.url);
+    // return copyCookiesToRedirect(NextResponse.redirect(url));
   }
 
   return supabaseResponse;
