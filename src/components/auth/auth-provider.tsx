@@ -12,11 +12,13 @@ export interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | null>(null);
 
 export function AuthProvider({
+  initialUser = null,
   children,
 }: {
+  initialUser?: User | null;
   children: React.ReactNode;
 }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(initialUser);
   const supabase = useMemo(() => createClient(), []);
 
   useEffect(() => {
