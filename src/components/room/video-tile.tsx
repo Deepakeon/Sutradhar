@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useEffect, useCallback, ReactNode } from 'react';
+import { useRef, useEffect, useCallback, ReactNode } from 'react';
 
 export interface VideoTileProps {
   stream: MediaStream | null;

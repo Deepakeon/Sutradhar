@@ -207,35 +207,35 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
     handleWrapUp();
   }, [executeEndCall, handleWrapUp]);
 
-  // if (loading) {
-  //   return <RoomLoading />;
-  // }
+  if (loading) {
+    return <RoomLoading />;
+  }
 
-  // if (error || !currentProfile) {
-  //   return (
-  //     <RoomError
-  //       title="Access Restricted"
-  //       message={error || 'Unable to join call room'}
-  //       action={{
-  //         label: "Return to Dashboard",
-  //         onAction: () => router.push('/dashboard')
-  //       }}
-  //     />
-  //   );
-  // }
+  if (error || !currentProfile) {
+    return (
+      <RoomError
+        title="Access Restricted"
+        message={error || 'Unable to join call room'}
+        action={{
+          label: "Return to Dashboard",
+          onAction: () => router.push('/dashboard')
+        }}
+      />
+    );
+  }
 
-  // if (callEndedState.ended) {
-  //   return (
-  //     <RoomCallEnded
-  //       isFinalizing={callEndedState.isFinalizing}
-  //       masterUrl={callEndedState.masterUrl}
-  //       action={{
-  //         label: "Back to Dashboard",
-  //         onAction: () => router.push('/dashboard')
-  //       }}
-  //     />
-  //   );
-  // }
+  if (callEndedState.ended) {
+    return (
+      <RoomCallEnded
+        isFinalizing={callEndedState.isFinalizing}
+        masterUrl={callEndedState.masterUrl}
+        action={{
+          label: "Back to Dashboard",
+          onAction: () => router.push('/dashboard')
+        }}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#101010] flex flex-col justify-between overflow-hidden">
@@ -249,7 +249,7 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
         <VideoGrid
           localStream={localStream}
           remoteStream={remoteStream}
-          currentRole={currentProfile?.role ?? "candidate"}
+          currentRole={currentProfile?.role}
           peerProfile={peerProfile}
           isMicMuted={isMicMuted}
           isCameraOff={isCameraOff}

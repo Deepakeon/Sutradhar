@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { RoomParticipant } from '@/types/interview';
 import { VideoTile } from './video-tile';
 import { VideoAvatarFallback } from './video-avatar-fallback';
@@ -46,7 +46,6 @@ export function VideoGrid({
 
   return (
     <div className="flex-1 w-full p-4 sm:p-6 grid grid-cols-1 md:grid-cols-2 gap-4 items-center justify-center min-h-[400px]">
-      {/* Remote Participant Tile */}
       <VideoTile
         stream={remoteStream}
         isVideoOff={!hasRemoteVideo}
@@ -72,7 +71,6 @@ export function VideoGrid({
         banner={autoplayBlocked ? <AutoplayBanner onUnlock={unlockAudio} /> : null}
       />
 
-      {/* Local Participant Tile */}
       <VideoTile
         stream={localStream}
         isVideoOff={isCameraOff || !localStream}
