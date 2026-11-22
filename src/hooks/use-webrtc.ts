@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { RealtimeChannel } from '@supabase/supabase-js';
-import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/auth/auth-provider';
 import { RoomParticipant, SignalingPayload } from '@/types/interview';
 
 export function getIceConfiguration(): RTCConfiguration {
@@ -60,7 +60,7 @@ export function useWebRTC({ interviewId, currentProfile, onCallEnded }: UseWebRT
   const currentProfileRef = useRef(currentProfile);
   const localStreamRef = useRef<MediaStream | null>(null);
   const onCallEndedRef = useRef(onCallEnded);
-  const supabase = useMemo(() => createClient(), []);
+  const { supabase } = useAuth();
 
   useEffect(() => {
     currentProfileRef.current = currentProfile;

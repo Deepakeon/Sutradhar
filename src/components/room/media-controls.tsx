@@ -2,7 +2,7 @@
 
 import { IconType } from 'react-icons';
 import { FiMic, FiMicOff, FiVideo, FiVideoOff, FiPhoneOff } from 'react-icons/fi';
-import { Action } from '@/types';
+import { Action } from '@/types/types';
 
 export type { Action };
 

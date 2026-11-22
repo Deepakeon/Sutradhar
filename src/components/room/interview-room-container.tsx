@@ -2,8 +2,10 @@
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
+import type { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
 import { RoomParticipant, InterviewRow } from '@/types/interview';
+import { useAuth } from '@/components/auth/auth-provider';
 import { useWebRTC } from '@/hooks/use-webrtc';
 import { useAudioStreamer } from '@/hooks/use-audio-streamer';
 import { VideoGrid } from './video-grid';
@@ -16,9 +18,11 @@ interface InterviewRoomContainerProps {
   interviewId: string;
 }
 
-export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerProps) {
+export function InterviewRoomContainer({
+  interviewId,
+}: InterviewRoomContainerProps) {
   const router = useRouter();
-  const supabase = useMemo(() => createClient(), []);
+  const { user, supabase } = useAuth();
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +30,7 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
   const [currentProfile, setCurrentProfile] = useState<RoomParticipant | null>(null);
   const [callEndedState, setCallEndedState] = useState<{
     ended: boolean;
-    masterUrl: string | null;
+    masterUrl?: string | null;
     isFinalizing: boolean;
   }>({
     ended: false,
@@ -38,10 +42,11 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
     async function loadSession() {
       try {
         setLoading(true);
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-        if (authError || !user) {
-          // router.push(`/login?next=/room/${interviewId}`);
+        const activeUser = user ?? (await supabase.auth.getUser()).data.user;
+        if (!activeUser) {
+          setError('Access Denied: Unauthenticated user');
+          setLoading(false);
           return;
         }
 
@@ -58,8 +63,8 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
           return;
         }
 
-        const isCandidate = interviewData.candidate_id === user.id;
-        const isInterviewer = interviewData.interviewer_id === user.id;
+        const isCandidate = interviewData.candidate_id === activeUser.id;
+        const isInterviewer = interviewData.interviewer_id === activeUser.id;
 
         if (!isCandidate && !isInterviewer) {
           setError('Access Denied: You are not an authorized participant for this interview.');
@@ -69,12 +74,11 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
 
         const role = isInterviewer ? 'interviewer' : 'candidate';
         setCurrentProfile({
-          id: user.id,
+          id: activeUser.id,
           role,
-          name: user.user_metadata?.full_name || role,
+          name: activeUser.user_metadata?.full_name || role,
         });
 
-        // Anchor session_started_at in private.interviews if this is the first participant entering
         if (!interviewData.session_started_at) {
           const nowIso = new Date().toISOString();
           try {
@@ -88,7 +92,7 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
               .eq('id', interviewId)
               .is('session_started_at', null)
               .select()
-              .single();
+              .maybeSingle();
 
             if (updatedInterview?.session_started_at) {
               interviewData.session_started_at = updatedInterview.session_started_at;
@@ -113,41 +117,6 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [interviewId]);
 
-  // Subscribe to changes on interview session (e.g. session_started_at synchronization)
-  useEffect(() => {
-    if (!interviewId) return;
-
-    const channel = supabase
-      .channel(`interview-session:${interviewId}`)
-      .on(
-        'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'private',
-          table: 'interviews',
-          filter: `id=eq.${interviewId}`,
-        },
-        (payload) => {
-          if (payload.new && (payload.new as InterviewRow).session_started_at) {
-            setInterview((prev) =>
-              prev
-                ? {
-                    ...prev,
-                    session_started_at: (payload.new as InterviewRow).session_started_at,
-                  }
-                : (payload.new as InterviewRow)
-            );
-          }
-        }
-      )
-      .subscribe((_status) => {});
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [interviewId, supabase]);
-
-  // Hook 1: WebRTC Real-Time Calling
   const {
     localStream,
     remoteStream,
@@ -187,16 +156,14 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
     setCallEndedState((prev) => ({ ...prev, ended: true, isFinalizing: true }));
 
     try {
-      const masterUrl = await finalizeRecording();
+     await finalizeRecording();
       setCallEndedState({
         ended: true,
-        masterUrl,
         isFinalizing: false,
       });
     } catch {
       setCallEndedState({
         ended: true,
-        masterUrl: null,
         isFinalizing: false,
       });
     }
@@ -228,7 +195,6 @@ export function InterviewRoomContainer({ interviewId }: InterviewRoomContainerPr
     return (
       <RoomCallEnded
         isFinalizing={callEndedState.isFinalizing}
-        masterUrl={callEndedState.masterUrl}
         action={{
           label: "Back to Dashboard",
           onAction: () => router.push('/dashboard')

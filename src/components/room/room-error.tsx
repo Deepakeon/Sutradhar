@@ -1,6 +1,6 @@
 import React from 'react';
 import { FiAlertCircle } from 'react-icons/fi';
-import { Action } from '@/types';
+import { Action } from '@/types/types';
 
 export interface RoomErrorProps {
   title?: string;

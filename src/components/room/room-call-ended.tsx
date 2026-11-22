@@ -1,6 +1,6 @@
 import React from 'react';
 import { FiCheck, FiExternalLink } from 'react-icons/fi';
-import { Action } from '@/types';
+import { Action } from '@/types/types';
 
 export interface RoomCallEndedProps {
   title?: string;
@@ -8,7 +8,6 @@ export interface RoomCallEndedProps {
   statusLabel?: string;
   uploadedChunksCount?: number;
   isFinalizing?: boolean;
-  masterUrl?: string | null;
   action?: Action;
   className?: string;
 }
@@ -19,7 +18,6 @@ export function RoomCallEnded({
   statusLabel = 'Completed',
   uploadedChunksCount,
   isFinalizing = false,
-  masterUrl = null,
   action,
   className = '',
 }: RoomCallEndedProps) {
@@ -49,19 +47,6 @@ export function RoomCallEnded({
             <div className="flex items-center gap-2 text-[#ffaa00] pt-1">
               <span className="w-2 h-2 rounded-full bg-[#ffaa00] animate-ping" />
               <span>Assembling master recording...</span>
-            </div>
-          ) : masterUrl ? (
-            <div className="pt-2 border-t border-[#3d3a39]">
-              <span className="text-[#8b949e] block mb-1">Master Recording:</span>
-              <a
-                href={masterUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[#00d992] hover:underline break-all inline-flex items-center gap-1"
-              >
-                <span>Listen to Recording</span>
-                <FiExternalLink className="text-xs" />
-              </a>
             </div>
           ) : null}
         </div>

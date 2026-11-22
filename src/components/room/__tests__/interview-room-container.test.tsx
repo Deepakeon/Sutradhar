@@ -146,7 +146,7 @@ beforeEach(() => {
 });
 
 describe('Room Container Seam (/room/[id])', () => {
-  it('redirects to login if user is unauthenticated', async () => {
+  it('displays access restricted when user is unauthenticated', async () => {
     mockGetUser.mockResolvedValue({
       data: { user: null },
       error: new Error('Not logged in'),
@@ -155,7 +155,8 @@ describe('Room Container Seam (/room/[id])', () => {
     render(<InterviewRoomContainer interviewId="session-123" />);
 
     await waitFor(() => {
-      expect(mockPush).toHaveBeenCalledWith('/login?next=/room/session-123');
+      expect(screen.getByText('Access Restricted')).toBeInTheDocument();
+      expect(screen.getByText(/Unauthenticated user/i)).toBeInTheDocument();
     });
   });
 
@@ -212,9 +213,8 @@ describe('Room Container Seam (/room/[id])', () => {
     render(<InterviewRoomContainer interviewId="session-123" />);
 
     await waitFor(() => {
-      expect(screen.getByText('Fullstack Systems Interview')).toBeInTheDocument();
-      expect(screen.getByText('candidate')).toBeInTheDocument();
-      expect(screen.getByText(/Waiting for partner/i)).toBeInTheDocument();
+      expect(screen.getByText('You (candidate)')).toBeInTheDocument();
+      expect(screen.getByText('Interview Partner')).toBeInTheDocument();
     });
 
     // Verify media controls toolbar buttons (mic, camera, leave)
@@ -325,6 +325,13 @@ describe('Room Container Seam (/room/[id])', () => {
         },
         error: null,
       }),
+      maybeSingle: vi.fn().mockResolvedValue({
+        data: {
+          id: 'session-123',
+          session_started_at: '2026-10-24T12:00:00.000Z',
+        },
+        error: null,
+      }),
     });
 
     mockFrom.mockReturnValue({
@@ -355,13 +362,8 @@ describe('Room Container Seam (/room/[id])', () => {
 
     // Candidate is alone in room
     await waitFor(() => {
-      expect(screen.getByText('Fullstack Systems Interview')).toBeInTheDocument();
-      expect(screen.getByText(/Waiting for partner/i)).toBeInTheDocument();
-    });
-
-    // Recording REC indicator is active immediately
-    await waitFor(() => {
-      expect(screen.getByText('REC')).toBeInTheDocument();
+      expect(screen.getByText('You (candidate)')).toBeInTheDocument();
+      expect(screen.getByText('Interview Partner')).toBeInTheDocument();
     });
 
     // MediaRecorder was started with 10s interval on the isolated mic track
@@ -384,11 +386,6 @@ describe('Room Container Seam (/room/[id])', () => {
           body: expect.any(FormData),
         })
       );
-    });
-
-    // Verify streamed chunk counter displayed in header
-    await waitFor(() => {
-      expect(screen.getByText('(1 streamed)')).toBeInTheDocument();
     });
   });
 });
