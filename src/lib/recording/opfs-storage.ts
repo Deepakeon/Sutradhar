@@ -26,7 +26,7 @@ export interface RecordingMetadata {
   mimeType: string;
 }
 
-export class RecordingSession {
+export class OpfsRecordingWriter {
   private writable: FileSystemWritableFileStream | null = null;
   private closed = false;
   private chunkCount = 0;
@@ -43,19 +43,12 @@ export class RecordingSession {
   /**
    * Appends a recording chunk to OPFS continuously without buffering in memory.
    */
-  async appendChunk(chunk: Blob | ArrayBuffer | Uint8Array): Promise<void> {
+  async appendChunk(chunk: Blob): Promise<void> {
     if (this.closed || !this.writable) {
-      throw new Error(`Recording session for ${this.interviewId} is already closed`);
+      throw new Error(`Recording writer for ${this.interviewId} is already closed`);
     }
 
-    let payload: Uint8Array;
-    if (chunk instanceof Blob) {
-      payload = new Uint8Array(await chunk.arrayBuffer());
-    } else if (chunk instanceof ArrayBuffer) {
-      payload = new Uint8Array(chunk);
-    } else {
-      payload = chunk;
-    }
+    const payload = new Uint8Array(await chunk.arrayBuffer());
 
     await this.writable.write(payload as unknown as FileSystemWriteChunkType);
     this.chunkCount += 1;
@@ -136,7 +129,7 @@ export class OpfsRecordingStorage {
   /**
    * Starts a new recording session, preparing the isolated directory and opening a writable stream.
    */
-  async startRecording(interviewId: string): Promise<RecordingSession> {
+  async startRecording(interviewId: string): Promise<OpfsRecordingWriter> {
     const dir = await this.getInterviewDirectory(interviewId, true);
     const fileHandle = await dir.getFileHandle('recording.webm', { create: true });
     const writable = await fileHandle.createWritable({ keepExistingData: false });
@@ -155,7 +148,7 @@ export class OpfsRecordingStorage {
     };
     await this.saveMetadata(dir, initialMeta);
 
-    return new RecordingSession(interviewId, this, writable);
+    return new OpfsRecordingWriter(interviewId, this, writable);
   }
 
   /**
@@ -219,7 +212,7 @@ export class OpfsRecordingStorage {
     await writable.write(patchedBuffer as unknown as FileSystemWriteChunkType);
     await writable.close();
 
-    const existingMeta = await this.getRecordingMetadata(interviewId);
+    const existingMeta = await this.getRecordingMetadata(interviewId, dir);
     const updatedMeta: RecordingMetadata = {
       interviewId,
       status: targetStatus,
@@ -261,9 +254,12 @@ export class OpfsRecordingStorage {
   /**
    * Retrieves persisting metadata for a given interview recording.
    */
-  async getRecordingMetadata(interviewId: string): Promise<RecordingMetadata | null> {
+  async getRecordingMetadata(
+    interviewId: string,
+    existingDir?: FileSystemDirectoryHandle
+  ): Promise<RecordingMetadata | null> {
     try {
-      const dir = await this.getInterviewDirectory(interviewId, false);
+      const dir = existingDir ?? (await this.getInterviewDirectory(interviewId, false));
       const metaHandle = await dir.getFileHandle('meta.json');
       const file = await metaHandle.getFile();
       const text =
@@ -305,7 +301,7 @@ export class OpfsRecordingStorage {
       ).entries();
       for await (const [id, handle] of entriesIterator) {
         if (handle.kind === 'directory') {
-          const meta = await this.getRecordingMetadata(id);
+          const meta = await this.getRecordingMetadata(id, handle as FileSystemDirectoryHandle);
           if (meta) {
             results.push(meta);
           }
@@ -341,7 +337,7 @@ export class OpfsRecordingStorage {
   ): Promise<void> {
     try {
       const dir = await this.getInterviewDirectory(interviewId, false);
-      const meta = await this.getRecordingMetadata(interviewId);
+      const meta = await this.getRecordingMetadata(interviewId, dir);
       if (meta) {
         meta.chunkCount = chunkCount;
         meta.fileSizeBytes = fileSizeBytes;

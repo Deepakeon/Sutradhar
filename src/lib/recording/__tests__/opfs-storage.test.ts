@@ -51,9 +51,11 @@ describe('OPFS Recording Storage Core', () => {
     ]);
 
     const c1 = createCluster(0, 0);
-    const chunk0 = new Uint8Array([...ebmlHeader, ...segHeader, ...info, ...tracks, ...c1]);
-    const chunk1 = createCluster(1000, 30);
-    const chunk2 = createCluster(2500, 40);
+    const chunk0 = new Blob([new Uint8Array([...ebmlHeader, ...segHeader, ...info, ...tracks, ...c1])], {
+      type: 'video/webm',
+    });
+    const chunk1 = new Blob([createCluster(1000, 30)], { type: 'video/webm' });
+    const chunk2 = new Blob([createCluster(2500, 40)], { type: 'video/webm' });
 
     return { chunk0, chunk1, chunk2 };
   }
@@ -72,7 +74,7 @@ describe('OPFS Recording Storage Core', () => {
     expect(meta).not.toBeNull();
     expect(meta?.status).toBe('recording');
     expect(meta?.chunkCount).toBe(1);
-    expect(meta?.fileSizeBytes).toBe(chunk0.length);
+    expect(meta?.fileSizeBytes).toBe(chunk0.size);
 
     // 3. Stream chunk 1 & chunk 2
     await session.appendChunk(chunk1);
@@ -80,7 +82,7 @@ describe('OPFS Recording Storage Core', () => {
 
     meta = await storage.getRecordingMetadata(interviewId);
     expect(meta?.chunkCount).toBe(3);
-    expect(meta?.fileSizeBytes).toBe(chunk0.length + chunk1.length + chunk2.length);
+    expect(meta?.fileSizeBytes).toBe(chunk0.size + chunk1.size + chunk2.size);
 
     await session.close();
   });
