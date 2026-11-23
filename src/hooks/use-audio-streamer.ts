@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createClient } from '@/lib/supabase/client';
+import { useAuth } from '@/components/auth/auth-provider';
 import { isWebMHeader, findWebMClusterIndex } from '@/lib/audio/webm-header';
 import type { ChunkUploadMetadata } from '@/types/interview';
 
@@ -37,7 +38,7 @@ export function useAudioStreamer({
   const profileIdRef = useRef(profileId);
   const roleRef = useRef(role);
   const sessionStartedAtRef = useRef(sessionStartedAt);
-  const supabase = useMemo(() => createClient(), []);
+  const { supabase } = useAuth();
 
   // Safe helper to stop recorder
   const stopMediaRecorder = useCallback(() => {
@@ -255,7 +256,7 @@ export function useAudioStreamer({
   }, [interviewId, isCallActive, localStream, profileId, role, stopMediaRecorder, uploadChunkWithRetry]);
 
   // Finalize interview session directly in Supabase
-  const finalizeRecording = useCallback(async (): Promise<string | null> => {
+  const finalizeRecording = useCallback(async () => {
     try {
       stopMediaRecorder();
 

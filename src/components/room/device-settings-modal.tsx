@@ -1,6 +1,7 @@
 'use client';
 
 import React from 'react';
+import { FiX } from 'react-icons/fi';
 
 interface DeviceSettingsModalProps {
   isOpen: boolean;
@@ -29,7 +30,7 @@ export function DeviceSettingsModal({
             onClick={onClose}
             className="text-[#8b949e] hover:text-[#f2f2f2] text-sm p-1 transition-colors"
           >
-            ✕
+            <FiX className="text-base" />
           </button>
         </div>
 
