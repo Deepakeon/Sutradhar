@@ -13,6 +13,7 @@ import { MediaControls } from './media-controls';
 import { RoomLoading } from './room-loading';
 import { RoomError } from './room-error';
 import { RoomCallEnded } from './room-call-ended';
+import { ComponentState } from '@/types/types';
 
 interface InterviewRoomContainerProps {
   interviewId: string;
@@ -24,8 +25,9 @@ export function InterviewRoomContainer({
   const router = useRouter();
   const { user, supabase } = useAuth();
 
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [componentState, setComponentState] = useState<ComponentState>({
+    type: "loading"
+  });
   const [interview, setInterview] = useState<InterviewRow | null>(null);
   const [currentProfile, setCurrentProfile] = useState<RoomParticipant | null>(null);
   const [callEndedState, setCallEndedState] = useState<{
@@ -41,12 +43,14 @@ export function InterviewRoomContainer({
   useEffect(() => {
     async function loadSession() {
       try {
-        setLoading(true);
+        setComponentState({ type: "loading" });
 
         const activeUser = user ?? (await supabase.auth.getUser()).data.user;
         if (!activeUser) {
-          setError('Access Denied: Unauthenticated user');
-          setLoading(false);
+          setComponentState({
+            type: "error",
+            message: "Access Denied: Unauthenticated user"
+          })
           return;
         }
 
@@ -58,8 +62,10 @@ export function InterviewRoomContainer({
           .single();
 
         if (dbError || !interviewData) {
-          setError('Interview session not found or invalid meeting link.');
-          setLoading(false);
+          setComponentState({
+            type: "error",
+            message: "Interview session not found or invalid meeting link."
+          })
           return;
         }
 
@@ -67,8 +73,10 @@ export function InterviewRoomContainer({
         const isInterviewer = interviewData.interviewer_id === activeUser.id;
 
         if (!isCandidate && !isInterviewer) {
-          setError('Access Denied: You are not an authorized participant for this interview.');
-          setLoading(false);
+          setComponentState({
+            type: "error",
+            message: "Access Denied: You are not an authorized participant for this interview."
+          })
           return;
         }
 
@@ -105,11 +113,15 @@ export function InterviewRoomContainer({
         }
 
         setInterview(interviewData);
-        setLoading(false);
+        setComponentState({
+          type: "success"
+        })
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : 'Failed to initialize interview room';
-        setError(message);
-        setLoading(false);
+        setComponentState({
+          type: "error",
+          message
+        })
       }
     }
 
@@ -156,7 +168,7 @@ export function InterviewRoomContainer({
     setCallEndedState((prev) => ({ ...prev, ended: true, isFinalizing: true }));
 
     try {
-     await finalizeRecording();
+      await finalizeRecording();
       setCallEndedState({
         ended: true,
         isFinalizing: false,
@@ -174,15 +186,15 @@ export function InterviewRoomContainer({
     handleWrapUp();
   }, [executeEndCall, handleWrapUp]);
 
-  if (loading) {
+  if (componentState.type === "loading") {
     return <RoomLoading />;
   }
 
-  if (error || !currentProfile) {
+  if (componentState.type === "error" || !currentProfile) {
     return (
       <RoomError
         title="Access Restricted"
-        message={error || 'Unable to join call room'}
+        message={componentState.type === "error" && componentState.message || 'Unable to join call room'}
         action={{
           label: "Return to Dashboard",
           onAction: () => router.push('/dashboard')

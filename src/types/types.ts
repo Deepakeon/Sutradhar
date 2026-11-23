@@ -12,3 +12,17 @@ export interface Action {
   disabled?: boolean;
   className?: string;
 }
+
+interface LoadingState {
+  type: "loading";
+}
+
+interface ErrorState{
+  type: "error";
+  message: string;
+}
+
+interface SuccessState {
+  type: "success";
+}
+export type ComponentState = LoadingState | ErrorState | SuccessState
